@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""HiveTalk CLI — interpret, compile, or REPL.
+"""HiveSpeak CLI — interpret, compile, or REPL.
 
 Usage:
     python -m compiler.htc run <file.ht>     Interpret a file
@@ -38,7 +38,7 @@ def run_source(source, env=None):
 
 def repl():
     """Interactive Read-Eval-Print Loop."""
-    print("HiveTalk v0.1.0 REPL")
+    print("HiveSpeak v0.1.0 REPL")
     print("Type expressions, or :q to quit\n")
     env = default_env()
     buf = ""

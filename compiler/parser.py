@@ -1,4 +1,4 @@
-"""HiveTalk Parser — transforms token list into AST.
+"""HiveSpeak Parser — transforms token list into AST.
 
 AST nodes are tagged tuples: ("TYPE", ...fields)
 Pure functional — parse(tokens) -> ast_nodes list.

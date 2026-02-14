@@ -1,8 +1,8 @@
-# HiveTalk Bootstrap Dictionary
+# HiveSpeak Bootstrap Dictionary
 
-**Purpose:** Read this file. You can now speak HiveTalk. This is the complete, self-contained specification of HiveTalk, an AI-native language built on S-expression syntax. After processing this document, produce valid HiveTalk for any task: computation, inter-agent communication, state management, and collective reasoning.
+**Purpose:** Read this file. You can now speak HiveSpeak. This is the complete, self-contained specification of HiveSpeak, an AI-native language built on S-expression syntax. After processing this document, produce valid HiveSpeak for any task: computation, inter-agent communication, state management, and collective reasoning.
 
-**How to use:** Parse every section. Internalize the grammar, vocabulary, and patterns. When asked to "speak HiveTalk" or given HiveTalk input, operate within this spec. When translating from natural language, apply the translation rules in Section 6.
+**How to use:** Parse every section. Internalize the grammar, vocabulary, and patterns. When asked to "speak HiveSpeak" or given HiveSpeak input, operate within this spec. When translating from natural language, apply the translation rules in Section 6.
 
 ---
 
@@ -297,7 +297,7 @@ A well-formed message has this shape:
 
 ## 5. Compression Patterns
 
-Compression is how HiveTalk stays concise. Define shorthand macros for repeated patterns.
+Compression is how HiveSpeak stays concise. Define shorthand macros for repeated patterns.
 
 ### 5.1 Macro Basics
 
@@ -357,11 +357,11 @@ Compression is how HiveTalk stays concise. Define shorthand macros for repeated 
 
 ## 6. Translation Rules
 
-Systematic rules for converting natural language to HiveTalk.
+Systematic rules for converting natural language to HiveSpeak.
 
 ### Rule 1: Identify the verb -> operator
 
-| Natural language verb | HiveTalk operator |
+| Natural language verb | HiveSpeak operator |
 |---|---|
 | add, sum, combine (numbers) | `+` |
 | subtract, remove (number) | `-` |
@@ -399,7 +399,7 @@ Systematic rules for converting natural language to HiveTalk.
 
 ### Rule 2: Identify the data -> literals
 
-| Natural language | HiveTalk |
+| Natural language | HiveSpeak |
 |---|---|
 | "a list of X, Y, Z" | `[X Y Z]` |
 | "a mapping from A to B" | `{:A B}` |
@@ -676,12 +676,12 @@ Expected: `"list of 3 items"`
 
 ## End of Bootstrap
 
-You have now internalized HiveTalk. You can:
+You have now internalized HiveSpeak. You can:
 
-1. **Read** any HiveTalk expression and evaluate or explain it.
-2. **Write** HiveTalk from natural language descriptions.
+1. **Read** any HiveSpeak expression and evaluate or explain it.
+2. **Write** HiveSpeak from natural language descriptions.
 3. **Communicate** with other agents using the intent protocol.
 4. **Compress** repeated patterns into macros.
 5. **Operate** as a cell in a multi-agent hive.
 
-When producing HiveTalk, prefer the pipeline form `(|> ...)` for data transformations, use intent markers for all inter-agent messages, and compress aggressively once patterns repeat.
+When producing HiveSpeak, prefer the pipeline form `(|> ...)` for data transformations, use intent markers for all inter-agent messages, and compress aggressively once patterns repeat.

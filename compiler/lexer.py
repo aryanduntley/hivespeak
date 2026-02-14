@@ -1,4 +1,4 @@
-"""HiveTalk Lexer — tokenizes source into a flat token list.
+"""HiveSpeak Lexer — tokenizes source into a flat token list.
 
 Tokens are tuples: (type, value, line, col)
 Pure functional style — no mutable global state.
@@ -139,7 +139,7 @@ def _read_hash(src, pos, line, col):
 
 
 def tokenize(source):
-    """Tokenize HiveTalk source string into a list of tokens.
+    """Tokenize HiveSpeak source string into a list of tokens.
 
     Each token is (type, value, line, col).
     """

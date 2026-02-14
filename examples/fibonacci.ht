@@ -1,4 +1,4 @@
-; Fibonacci in HiveTalk — multiple approaches
+; Fibonacci in HiveSpeak — multiple approaches
 
 ; ─── Recursive (naive) ───
 (def (fib-naive n)

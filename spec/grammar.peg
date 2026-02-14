@@ -1,6 +1,6 @@
-# HiveTalk PEG Grammar v0.1.0
+# HiveSpeak PEG Grammar v0.1.0
 # =========================
-# This is the formal grammar for parsing HiveTalk source code.
+# This is the formal grammar for parsing HiveSpeak source code.
 # Parser generators (e.g., Python's parsimonious, PEG.js, pest) can
 # consume this directly.
 

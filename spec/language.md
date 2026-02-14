@@ -1,8 +1,8 @@
-# HiveTalk Language Specification v0.1.0
+# HiveSpeak Language Specification v0.1.0
 
 ## 1. Design Principles
 
-HiveTalk is an AI-native language optimized for:
+HiveSpeak is an AI-native language optimized for:
 
 1. **Token efficiency** — maximum semantic density per token
 2. **Unambiguous parsing** — prefix notation, no precedence rules
@@ -10,7 +10,7 @@ HiveTalk is an AI-native language optimized for:
 4. **Built-in communication** — inter-agent messaging is a first-class primitive
 5. **Compression** — macro system lets the language compress itself over time
 
-HiveTalk uses S-expression syntax: `(operator operand1 operand2 ...)`.
+HiveSpeak uses S-expression syntax: `(operator operand1 operand2 ...)`.
 Every expression evaluates to a value. There are no statements.
 
 ## 2. Lexical Structure
@@ -327,7 +327,7 @@ In a pipeline, the threaded value is inserted as the **last** argument of each f
 
 ## 6. Hive Primitives
 
-These are the substrate operations — the reason HiveTalk exists.
+These are the substrate operations — the reason HiveSpeak exists.
 
 ### 6.1 Cell: `cell`
 
@@ -407,7 +407,7 @@ Create a named memory packet manually:
 
 ## 7. Communication Protocol
 
-For AI-to-AI messaging, HiveTalk defines structured intents:
+For AI-to-AI messaging, HiveSpeak defines structured intents:
 
 ### 7.1 Intent Markers
 
@@ -479,7 +479,7 @@ Once vocabulary is established between agents, communication compresses:
 
 ## 9. Macro System (Compression Mechanism)
 
-Macros are how HiveTalk compresses itself. They transform code before evaluation.
+Macros are how HiveSpeak compresses itself. They transform code before evaluation.
 
 ### 9.1 Defining Macros
 
@@ -584,7 +584,7 @@ sorted([u["name"] for u in users if u["age"] > 18])
 ```
 ~16 tokens
 
-**HiveTalk:**
+**HiveSpeak:**
 ```
 (|> users (flt (fn [u] (> (get u :age) 18))) (map (fn [u] (get u :name))) srt)
 ```
@@ -602,7 +602,7 @@ The savings scale with:
 
 ## 14. Self-Modification Protocol
 
-HiveTalk can modify its own rules through the same emit-merge-compress cycle:
+HiveSpeak can modify its own rules through the same emit-merge-compress cycle:
 
 1. An agent **emits** a proposed language change (new macro, new builtin, new syntax)
 2. Agents **merge** on the proposal (discuss, test, evaluate)

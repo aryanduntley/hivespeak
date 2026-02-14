@@ -1,4 +1,4 @@
-"""HiveTalk Evaluator — interprets AST nodes in an environment.
+"""HiveSpeak Evaluator — interprets AST nodes in an environment.
 
 Architecture: data-driven dispatch via dicts.
 - Special forms: dict mapping name -> handler(args_ast, env)
@@ -314,7 +314,7 @@ def _sf_try(args, env):
     """(try body (catch e handler))"""
     try:
         return evaluate(args[0], env)
-    except _HiveTalkError as e:
+    except _HiveSpeakError as e:
         if len(args) > 1 and node_type(args[1]) == "SEXPR":
             catch_form = args[1][1]
             if node_type(catch_form[0]) == "SYM" and catch_form[0][1] == "catch":
@@ -330,10 +330,10 @@ def _sf_try(args, env):
 
 def _sf_throw(args, env):
     """(throw value)"""
-    raise _HiveTalkError(evaluate(args[0], env))
+    raise _HiveSpeakError(evaluate(args[0], env))
 
 
-class _HiveTalkError(Exception):
+class _HiveSpeakError(Exception):
     def __init__(self, value):
         self.value = value
         super().__init__(str(value))
@@ -546,7 +546,7 @@ _SPECIAL_FORMS = {
 # ─── Built-in Functions ────────────────────────────────────────────────────
 
 def _truthy(v):
-    """HiveTalk truthiness: F, N, 0, empty string/list/map are falsy."""
+    """HiveSpeak truthiness: F, N, 0, empty string/list/map are falsy."""
     if v is None or v is False:
         return False
     if v == 0 or v == "" or v == [] or v == {}:
@@ -579,7 +579,7 @@ def _ht_print(*args):
 
 
 def _format_val(v):
-    """Format a HiveTalk value for display."""
+    """Format a HiveSpeak value for display."""
     if v is None:              return "N"
     if v is True:              return "T"
     if v is False:             return "F"

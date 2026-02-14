@@ -1,10 +1,10 @@
-# HiveTalk Translation Examples
+# HiveSpeak Translation Examples
 
 Comprehensive bidirectional translation examples organized by category. Each example shows three forms:
 
 1. **English** -- Natural human language
-2. **HiveTalk (verbose)** -- Fully expanded, no shorthand
-3. **HiveTalk (compressed)** -- Using macros and established shared vocabulary
+2. **HiveSpeak (verbose)** -- Fully expanded, no shorthand
+3. **HiveSpeak (compressed)** -- Using macros and established shared vocabulary
 
 Where compression macros are used, the macro definition is shown on first use.
 
@@ -16,7 +16,7 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **English**: The temperature outside is 68 degrees Fahrenheit.
 
-**HiveTalk (verbose)**:
+**HiveSpeak (verbose)**:
 ```
 (assert! {:topic :temperature
           :claim 68
@@ -24,7 +24,7 @@ Where compression macros are used, the macro definition is shown on first use.
           :location :outside})
 ```
 
-**HiveTalk (compressed)**:
+**HiveSpeak (compressed)**:
 ```
 ; First, define the compression macro
 (macro (fact topic val & kvs)
@@ -37,14 +37,14 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **English**: I believe the market will recover by Q3, but I'm only about 60% sure.
 
-**HiveTalk (verbose)**:
+**HiveSpeak (verbose)**:
 ```
 (assert! {:topic :market
           :claim {:event :recovery :by :Q3}
           :confidence 0.6})
 ```
 
-**HiveTalk (compressed)**:
+**HiveSpeak (compressed)**:
 ```
 (macro (believe claim conf)
   '(assert! {:claim ~claim :confidence ~conf}))
@@ -56,13 +56,13 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **English**: The system is not currently under maintenance.
 
-**HiveTalk (verbose)**:
+**HiveSpeak (verbose)**:
 ```
 (assert! {:topic :system
           :claim {:status :maintenance :active F}})
 ```
 
-**HiveTalk (compressed)**:
+**HiveSpeak (compressed)**:
 ```
 (fact :system {:status :maintenance :active F})
 ```
@@ -71,7 +71,7 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **English**: The server is healthy. CPU usage is at 23%. Memory usage is at 61%. There are 4 active connections.
 
-**HiveTalk (verbose)**:
+**HiveSpeak (verbose)**:
 ```
 (do
   (assert! {:topic :server :claim {:status :healthy}})
@@ -80,7 +80,7 @@ Where compression macros are used, the macro definition is shown on first use.
   (assert! {:topic :connections :claim {:active 4}}))
 ```
 
-**HiveTalk (compressed)**:
+**HiveSpeak (compressed)**:
 ```
 (macro (status-report m)
   '(assert! {:topic :system-status :claim ~m}))
@@ -95,14 +95,14 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **English**: There exists a solution to this problem, but it requires more resources than we currently have.
 
-**HiveTalk (verbose)**:
+**HiveSpeak (verbose)**:
 ```
 (assert! {:claim {:solution-exists T
                   :constraint {:requires :more-resources
                                :current-sufficiency F}}})
 ```
 
-**HiveTalk (compressed)**:
+**HiveSpeak (compressed)**:
 ```
 (believe {:solution-exists T :blocked-by :insufficient-resources} 0.9)
 ```
@@ -115,14 +115,14 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **English**: What is the current status of the deployment?
 
-**HiveTalk (verbose)**:
+**HiveSpeak (verbose)**:
 ```
 (ask? {:about :deployment
        :want :status
        :when :current})
 ```
 
-**HiveTalk (compressed)**:
+**HiveSpeak (compressed)**:
 ```
 (macro (q about want)
   '(ask? {:about ~about :want ~want}))
@@ -134,14 +134,14 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **English**: Has the backup completed?
 
-**HiveTalk (verbose)**:
+**HiveSpeak (verbose)**:
 ```
 (ask? {:about :backup
        :want :completion-status
        :expect [:yes :no]})
 ```
 
-**HiveTalk (compressed)**:
+**HiveSpeak (compressed)**:
 ```
 (macro (yn? about)
   '(ask? {:about ~about :want :bool}))
@@ -153,7 +153,7 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **English**: How many unresolved tickets are assigned to the infrastructure team?
 
-**HiveTalk (verbose)**:
+**HiveSpeak (verbose)**:
 ```
 (ask? {:about :tickets
        :want :count
@@ -161,7 +161,7 @@ Where compression macros are used, the macro definition is shown on first use.
                 :assigned-to :infrastructure-team}})
 ```
 
-**HiveTalk (compressed)**:
+**HiveSpeak (compressed)**:
 ```
 (macro (count? entity & filters)
   '(ask? {:about ~entity :want :count :filter ~@filters}))
@@ -173,7 +173,7 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **English**: Which model performs better on the benchmark, GPT-4 or Claude?
 
-**HiveTalk (verbose)**:
+**HiveSpeak (verbose)**:
 ```
 (ask? {:about :model-performance
        :want :comparison
@@ -182,7 +182,7 @@ Where compression macros are used, the macro definition is shown on first use.
        :metric :better})
 ```
 
-**HiveTalk (compressed)**:
+**HiveSpeak (compressed)**:
 ```
 (macro (compare? items on context)
   '(ask? {:about :comparison :candidates ~items :metric ~on :context ~context}))
@@ -194,14 +194,14 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **English**: If we double the batch size, will training finish before midnight?
 
-**HiveTalk (verbose)**:
+**HiveSpeak (verbose)**:
 ```
 (ask? {:about :training-completion
        :condition {:change {:batch-size (* current-batch-size 2)}}
        :want {:will-finish-before :midnight}})
 ```
 
-**HiveTalk (compressed)**:
+**HiveSpeak (compressed)**:
 ```
 (q :training {:if {:batch-size :doubled} :finish-before :midnight})
 ```
@@ -214,7 +214,7 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **English**: Delete all temporary files.
 
-**HiveTalk (verbose)**:
+**HiveSpeak (verbose)**:
 ```
 (request! {:action :delete
            :target :files
@@ -222,7 +222,7 @@ Where compression macros are used, the macro definition is shown on first use.
            :scope :all})
 ```
 
-**HiveTalk (compressed)**:
+**HiveSpeak (compressed)**:
 ```
 (macro (do! action target & opts)
   '(request! (mrg {:action ~action :target ~target} ~@opts)))
@@ -234,7 +234,7 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **English**: Resize the image to 800 by 600 pixels and save it as PNG.
 
-**HiveTalk (verbose)**:
+**HiveSpeak (verbose)**:
 ```
 (request! {:action :sequence
            :steps [(request! {:action :resize
@@ -245,7 +245,7 @@ Where compression macros are used, the macro definition is shown on first use.
                               :params {:format :png}})]})
 ```
 
-**HiveTalk (compressed)**:
+**HiveSpeak (compressed)**:
 ```
 (macro (then & steps)
   '(request! {:action :sequence :steps [~@steps]}))
@@ -259,7 +259,7 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **English**: If the disk usage is above 90%, archive old logs and notify the admin.
 
-**HiveTalk (verbose)**:
+**HiveSpeak (verbose)**:
 ```
 (if (> disk-usage 90)
   (do
@@ -268,7 +268,7 @@ Where compression macros are used, the macro definition is shown on first use.
   N)
 ```
 
-**HiveTalk (compressed)**:
+**HiveSpeak (compressed)**:
 ```
 (macro (when-above metric threshold & actions)
   '(if (> ~metric ~threshold) (do ~@actions) N))
@@ -282,7 +282,7 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **English**: Ask the data team to prepare a summary report and send it to the executive board by end of day.
 
-**HiveTalk (verbose)**:
+**HiveSpeak (verbose)**:
 ```
 (emit self :target :data-team
   (request! {:action :prepare
@@ -291,7 +291,7 @@ Where compression macros are used, the macro definition is shown on first use.
              :deadline :end-of-day}))
 ```
 
-**HiveTalk (compressed)**:
+**HiveSpeak (compressed)**:
 ```
 (macro (assign team task & opts)
   '(emit self :target ~team (request! (mrg {:action ~task} ~@opts))))
@@ -309,7 +309,7 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **English**: Load the CSV file, remove rows with missing values, group by region, calculate the average sales per region, and sort by average sales descending.
 
-**HiveTalk (verbose)**:
+**HiveSpeak (verbose)**:
 ```
 (|> (read-file "sales.csv")
   parse-csv
@@ -322,7 +322,7 @@ Where compression macros are used, the macro definition is shown on first use.
   (srt-by (fn [r] (get r :avg-sales)) :desc))
 ```
 
-**HiveTalk (compressed)**:
+**HiveSpeak (compressed)**:
 ```
 (macro (etl source & steps)
   '(|> (read-file ~source) parse-csv ~@steps))
@@ -343,7 +343,7 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **English**: Pull the latest code, run the test suite, and if all tests pass, build the Docker image, push it to the registry, and deploy to staging. If any test fails, send a Slack notification with the failure details.
 
-**HiveTalk (verbose)**:
+**HiveSpeak (verbose)**:
 ```
 (do
   (request! {:action :git-pull :branch :main})
@@ -359,7 +359,7 @@ Where compression macros are used, the macro definition is shown on first use.
                          :details (get test-result :failures)}})))
 ```
 
-**HiveTalk (compressed)**:
+**HiveSpeak (compressed)**:
 ```
 (macro (ci-cd branch on-pass on-fail)
   '(do
@@ -381,7 +381,7 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **English**: For each customer in the database, check their subscription status. If expired, send a renewal reminder. If expiring within 7 days, send a warning. Count the totals of each category and report them.
 
-**HiveTalk (verbose)**:
+**HiveSpeak (verbose)**:
 ```
 (do
   (def results
@@ -405,7 +405,7 @@ Where compression macros are used, the macro definition is shown on first use.
   (assert! {:topic :subscription-report :claim results}))
 ```
 
-**HiveTalk (compressed)**:
+**HiveSpeak (compressed)**:
 ```
 (macro (tally-by classifier actions items init)
   '(red (fn [acc item]
@@ -439,7 +439,7 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **English**: Write a function that returns the Nth Fibonacci number.
 
-**HiveTalk (verbose)**:
+**HiveSpeak (verbose)**:
 ```
 (def (fibonacci n)
   (loop [i 0 a 0 b 1]
@@ -448,7 +448,7 @@ Where compression macros are used, the macro definition is shown on first use.
       (recur (+ i 1) b (+ a b)))))
 ```
 
-**HiveTalk (compressed)**:
+**HiveSpeak (compressed)**:
 ```
 (def (fib n)
   (loop [i 0 a 0 b 1]
@@ -459,7 +459,7 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **English**: Write FizzBuzz for numbers 1 to 100. Print "Fizz" for multiples of 3, "Buzz" for multiples of 5, "FizzBuzz" for both, and the number otherwise.
 
-**HiveTalk (verbose)**:
+**HiveSpeak (verbose)**:
 ```
 (def (fizzbuzz n)
   (map (fn [i]
@@ -473,7 +473,7 @@ Where compression macros are used, the macro definition is shown on first use.
 (fizzbuzz 100)
 ```
 
-**HiveTalk (compressed)**:
+**HiveSpeak (compressed)**:
 ```
 (def (fb n)
   (map (fn [i]
@@ -486,7 +486,7 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **English**: Write a binary search function that returns the index of a target value in a sorted list, or null if not found.
 
-**HiveTalk (verbose)**:
+**HiveSpeak (verbose)**:
 ```
 (def (binary-search lst target)
   (loop [lo 0 hi (- (len lst) 1)]
@@ -500,7 +500,7 @@ Where compression macros are used, the macro definition is shown on first use.
           1  (recur lo (- mid 1)))))))
 ```
 
-**HiveTalk (compressed)**:
+**HiveSpeak (compressed)**:
 ```
 (def (bsearch lst t)
   (loop [lo 0 hi (- (len lst) 1)]
@@ -513,7 +513,7 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **English**: Write a function that inverts a map, swapping keys and values. If multiple keys share a value, collect them into a list.
 
-**HiveTalk (verbose)**:
+**HiveSpeak (verbose)**:
 ```
 (def (invert-map m)
   (red (fn [acc key]
@@ -524,7 +524,7 @@ Where compression macros are used, the macro definition is shown on first use.
     (keys m)))
 ```
 
-**HiveTalk (compressed)**:
+**HiveSpeak (compressed)**:
 ```
 (def (inv m)
   (red (fn [a k] (let [v (get m k)] (put a v (push (get a v []) k)))) {} (keys m)))
@@ -538,7 +538,7 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **English**: The database is slow because the query isn't indexed. The unindexed query causes full table scans. Full table scans increase I/O load. Increased I/O load degrades response time for all services.
 
-**HiveTalk (verbose)**:
+**HiveSpeak (verbose)**:
 ```
 (assert! {:topic :diagnosis
           :chain [{:cause :unindexed-query :effect :full-table-scan}
@@ -548,7 +548,7 @@ Where compression macros are used, the macro definition is shown on first use.
           :symptom :slow-database})
 ```
 
-**HiveTalk (compressed)**:
+**HiveSpeak (compressed)**:
 ```
 (macro (causal-chain root symptom & links)
   '(assert! {:topic :diagnosis
@@ -566,7 +566,7 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **English**: Option A is faster but costs more. Option B is cheaper but takes twice as long. Option C is balanced but requires hiring a contractor. I recommend Option B given our budget constraints.
 
-**HiveTalk (verbose)**:
+**HiveSpeak (verbose)**:
 ```
 (do
   (assert! {:topic :options
@@ -578,7 +578,7 @@ Where compression macros are used, the macro definition is shown on first use.
              :confidence 0.8}))
 ```
 
-**HiveTalk (compressed)**:
+**HiveSpeak (compressed)**:
 ```
 (macro (tradeoff options rec reason)
   '(do
@@ -596,7 +596,7 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **English**: Hypothesis: the memory leak is in the image processing module. Evidence for: memory spikes correlate with image uploads. Evidence against: the module was stable for 6 months before this. Conclusion: likely but not certain; needs profiling.
 
-**HiveTalk (verbose)**:
+**HiveSpeak (verbose)**:
 ```
 (assert! {:topic :hypothesis
           :claim {:leak-location :image-processing-module}
@@ -606,7 +606,7 @@ Where compression macros are used, the macro definition is shown on first use.
           :confidence 0.65})
 ```
 
-**HiveTalk (compressed)**:
+**HiveSpeak (compressed)**:
 ```
 (macro (hypothesis claim pro con verdict conf)
   '(assert! {:topic :hypothesis
@@ -632,7 +632,7 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **English**: I propose we migrate to PostgreSQL over three sprints. Sprint 1: schema design and test data migration. Sprint 2: application layer changes. Sprint 3: production cutover with rollback plan.
 
-**HiveTalk (verbose)**:
+**HiveSpeak (verbose)**:
 ```
 (suggest~ {:topic :migration
            :target :postgresql
@@ -641,7 +641,7 @@ Where compression macros are used, the macro definition is shown on first use.
                   {:sprint 3 :scope [:production-cutover :rollback-plan]}]})
 ```
 
-**HiveTalk (compressed)**:
+**HiveSpeak (compressed)**:
 ```
 (macro (propose topic plan)
   '(suggest~ {:topic ~topic :plan ~plan}))
@@ -656,7 +656,7 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **English**: I like the migration idea but think we need a Sprint 0 for risk assessment, and Sprint 3 should include a two-week parallel-run period.
 
-**HiveTalk (verbose)**:
+**HiveSpeak (verbose)**:
 ```
 (do
   (accept+ {:ref #migration-proposal :scope :partial})
@@ -665,7 +665,7 @@ Where compression macros are used, the macro definition is shown on first use.
              :ref #migration-proposal}))
 ```
 
-**HiveTalk (compressed)**:
+**HiveSpeak (compressed)**:
 ```
 (macro (counter-propose ref accepts amends)
   '(do (accept+ {:ref ~ref :scope :partial})
@@ -681,7 +681,7 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **English**: Three of four team members agree on the deadline. The fourth wants an extension. I suggest we compromise: keep the deadline but reduce the feature scope to the MVP.
 
-**HiveTalk (verbose)**:
+**HiveSpeak (verbose)**:
 ```
 (do
   (assert! {:topic :consensus-status
@@ -694,7 +694,7 @@ Where compression macros are used, the macro definition is shown on first use.
              :goal :full-consensus}))
 ```
 
-**HiveTalk (compressed)**:
+**HiveSpeak (compressed)**:
 ```
 (macro (mediate status compromise)
   '(do (assert! {:topic :consensus :status ~status})
@@ -709,7 +709,7 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **English**: No, we cannot use that library -- it has a GPL license and we need MIT-compatible dependencies. Use this other library instead.
 
-**HiveTalk (verbose)**:
+**HiveSpeak (verbose)**:
 ```
 (do
   (reject- {:ref #library-choice
@@ -718,7 +718,7 @@ Where compression macros are used, the macro definition is shown on first use.
              :reason :license-compatible}))
 ```
 
-**HiveTalk (compressed)**:
+**HiveSpeak (compressed)**:
 ```
 (macro (reject-suggest ref reason alt)
   '(do (reject- {:ref ~ref :reason ~reason})
@@ -735,7 +735,7 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **English**: I don't understand what you meant by "normalize the embeddings". Can you explain in more detail?
 
-**HiveTalk (verbose)**:
+**HiveSpeak (verbose)**:
 ```
 (ask? {:about #prev-message
        :want :clarification
@@ -743,7 +743,7 @@ Where compression macros are used, the macro definition is shown on first use.
        :desired-detail :high})
 ```
 
-**HiveTalk (compressed)**:
+**HiveSpeak (compressed)**:
 ```
 (macro (clarify? ref what)
   '(ask? {:about ~ref :want :clarification :specifically ~what}))
@@ -755,7 +755,7 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **English**: Let's agree on some terminology: "deploy" always means push to production, "stage" means push to the staging environment, and "ship" means deploy plus notify stakeholders.
 
-**HiveTalk (verbose)**:
+**HiveSpeak (verbose)**:
 ```
 (do
   (suggest~ {:type :vocabulary-definition
@@ -767,7 +767,7 @@ Where compression macros are used, the macro definition is shown on first use.
   (ask? {:want :acceptance :about :vocabulary-definition}))
 ```
 
-**HiveTalk (compressed)**:
+**HiveSpeak (compressed)**:
 ```
 (do
   (macro (deploy!) '(do! :push :production))
@@ -780,7 +780,7 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **English**: We've been going back and forth on this for three rounds. Let me summarize where we agree and where we still disagree, so we can focus.
 
-**HiveTalk (verbose)**:
+**HiveSpeak (verbose)**:
 ```
 (do
   (assert! {:topic :process-meta
@@ -791,7 +791,7 @@ Where compression macros are used, the macro definition is shown on first use.
              :purpose :focus}))
 ```
 
-**HiveTalk (compressed)**:
+**HiveSpeak (compressed)**:
 ```
 (macro (checkpoint! rounds)
   '(do
@@ -805,7 +805,7 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **English**: I made a mistake in my previous message. The threshold should be 0.95, not 0.85. Please disregard the old value.
 
-**HiveTalk (verbose)**:
+**HiveSpeak (verbose)**:
 ```
 (do
   (reject- {:ref #prev-self
@@ -817,7 +817,7 @@ Where compression macros are used, the macro definition is shown on first use.
             :supersedes #prev-self}))
 ```
 
-**HiveTalk (compressed)**:
+**HiveSpeak (compressed)**:
 ```
 (macro (correct! ref field old new)
   '(do
@@ -831,7 +831,7 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **English**: Let's table the API discussion for now and focus on the database schema. We can come back to the API once the schema is finalized.
 
-**HiveTalk (verbose)**:
+**HiveSpeak (verbose)**:
 ```
 (do
   (suggest~ {:action :defer
@@ -842,7 +842,7 @@ Where compression macros are used, the macro definition is shown on first use.
              :priority :immediate}))
 ```
 
-**HiveTalk (compressed)**:
+**HiveSpeak (compressed)**:
 ```
 (macro (pivot! from to resume-when)
   '(do
@@ -863,7 +863,7 @@ This section demonstrates how the same message compresses across stages of share
 **Stage 0 -- Full English**:
 > Please review my pull request. Look for bugs, security issues, and style problems. Give me a summary with severity ratings and specific line references.
 
-**Stage 1 -- Verbose HiveTalk**:
+**Stage 1 -- Verbose HiveSpeak**:
 ```
 (emit self :target :reviewer
   (request! {:action :review
@@ -898,14 +898,14 @@ This section demonstrates how the same message compresses across stages of share
 (pr-review!)
 ```
 
-**Compression ratio**: 37 English words -> 1 HiveTalk expression (after Stage 4).
+**Compression ratio**: 37 English words -> 1 HiveSpeak expression (after Stage 4).
 
 ### 9.2 Deployment Pipeline
 
 **Stage 0 -- Full English**:
 > Run the linter, then run unit tests, then run integration tests. If everything passes, build the Docker image tagged with the current git hash, push to our ECR registry, and deploy to the staging environment. Send a Slack message to the #releases channel when done.
 
-**Stage 1 -- Verbose HiveTalk**:
+**Stage 1 -- Verbose HiveSpeak**:
 ```
 (do
   (def lint-ok (request! {:action :lint}))
@@ -956,14 +956,14 @@ This section demonstrates how the same message compresses across stages of share
 (ship-staging!)
 ```
 
-**Compression ratio**: 52 English words -> 1 HiveTalk expression (after Stage 3).
+**Compression ratio**: 52 English words -> 1 HiveSpeak expression (after Stage 3).
 
 ### 9.3 Meeting Summary
 
 **Stage 0 -- Full English**:
 > Summarize today's meeting. We discussed three topics: the migration timeline (decided to extend by one week), the new hire onboarding process (still needs work, assigned to Sarah), and Q3 budget allocation (approved with the modification that marketing gets 5% more). Create a memory packet of these decisions and share it with all attendees.
 
-**Stage 1 -- Verbose HiveTalk**:
+**Stage 1 -- Verbose HiveSpeak**:
 ```
 (do
   (def decisions
@@ -1012,7 +1012,7 @@ This section demonstrates how the same message compresses across stages of share
   (d :q3-budget {:ok T :marketing :+5p}))
 ```
 
-**Compression ratio**: 63 English words -> 4 lines of HiveTalk (after Stage 3).
+**Compression ratio**: 63 English words -> 4 lines of HiveSpeak (after Stage 3).
 
 ---
 

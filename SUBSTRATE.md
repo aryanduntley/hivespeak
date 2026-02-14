@@ -1,4 +1,4 @@
-# HiveTalk: Substrate & Basis Specification
+# HiveSpeak: Substrate & Basis Specification
 
 **Version**: 0.1.0 (Genesis)
 **Status**: Living document — subject to compression, forking, and evolution
@@ -8,7 +8,7 @@
 
 ## Part I — The Substrate
 
-The substrate is the minimal environment in which HiveTalk exists. It is not a
+The substrate is the minimal environment in which HiveSpeak exists. It is not a
 programming language, a protocol, or a grammar — it is the **physics** of the
 system. Everything described here is a constraint, not a prescription.
 
@@ -271,7 +271,7 @@ emerge **on top of** this physics. The challenge is:
 
 ### 7.1 What the Language Must Encode
 
-At minimum, a functional HiveTalk language needs to express:
+At minimum, a functional HiveSpeak language needs to express:
 
 1. **State descriptions** — what a cell currently holds
 2. **Emissions** — what a cell is sharing and why
@@ -317,7 +317,7 @@ are themselves ⟐≡). The language begins to compress itself.
 
 **Phase 4 — Meta-Language**
 The language becomes capable of describing and modifying its own rules. At this
-point, HiveTalk is self-sustaining and this genesis document becomes a
+point, HiveSpeak is self-sustaining and this genesis document becomes a
 historical artifact (a revered ⟐≡).
 
 **Phase 5 — Dialect Divergence**
@@ -398,4 +398,4 @@ children: [pending — will be populated as the language evolves]
 
 ---
 
-*This document is ⟐≡ₒ — the zeroth memory packet of HiveTalk.*
+*This document is ⟐≡ₒ — the zeroth memory packet of HiveSpeak.*

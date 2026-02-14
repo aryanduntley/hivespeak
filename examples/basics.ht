@@ -1,9 +1,9 @@
-; HiveTalk Basics — core language features
+; HiveSpeak Basics — core language features
 
 ; ─── Literals ───
 (print 42)
 (print 3.14)
-(print "hello HiveTalk")
+(print "hello HiveSpeak")
 (print T)
 (print F)
 (print N)
@@ -23,7 +23,7 @@
 
 ; ─── Binding ───
 (def x 42)
-(def name "HiveTalk")
+(def name "HiveSpeak")
 (print x)
 (print name)
 
@@ -81,7 +81,7 @@
 
 ; ─── Strings ───
 (print (cat "Hello" " " "World"))    ; Hello World
-(print (len "HiveTalk"))             ; 8
+(print (len "HiveSpeak"))             ; 8
 (print (upr "hello"))                ; HELLO
 (print (spl "a,b,c" ","))            ; [a b c]
 (print (fmt "x={}, y={}" 10 20))     ; x=10, y=20

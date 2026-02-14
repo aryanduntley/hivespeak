@@ -1,4 +1,4 @@
-"""HiveTalk compiler/interpreter — functional procedural, no OOP."""
+"""HiveSpeak compiler/interpreter — functional procedural, no OOP."""
 
 from .lexer import tokenize
 from .parser import parse

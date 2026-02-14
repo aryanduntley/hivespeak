@@ -1,4 +1,4 @@
-; Simple Calculator in HiveTalk
+; Simple Calculator in HiveSpeak
 
 (def (calc op a b)
   (match op

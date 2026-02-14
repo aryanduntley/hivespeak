@@ -1,4 +1,4 @@
-; HiveTalk Core Vocabulary — defined in HiveTalk itself
+; HiveSpeak Core Vocabulary — defined in HiveSpeak itself
 ; This file is loaded by the interpreter to bootstrap common patterns.
 
 ; ─── Functional Combinators ───────────────────────────────────────────────
