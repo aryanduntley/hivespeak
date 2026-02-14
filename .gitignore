@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+vendor/
+.venv/
+.env
+.env.local
+.env.development
+.env.production
+
+# Build artifacts
+build/
+dist/
+out/
+target/
+*.log
+
+# System files
+.DS_Store
+Thumbs.db
+
+# IDE and editor configurations
+.vscode/
+.idea/
+.project
+.settings/
+
+# Miscellaneous
+.claude
+.mcp.json
+.pytest_cache/

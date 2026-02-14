@@ -62,10 +62,12 @@ def compile_to_js(ast_nodes):
         "function _htRef(h) { return _packets.get(h) || null; }",
         "",
         "// Standard library",
+        "const len = a => a.length;",
         "const hd = a => a[0];",
         "const tl = a => a.slice(1);",
         "const nth = (a, i) => a[i];",
         "const push = (a, v) => [...a, v];",
+        "const map = (f, a) => a.map(f);",
         "const flt = (f, a) => a.filter(f);",
         "const red = (f, init, a) => a.reduce(f, init);",
         "const srt = a => [...a].sort((x,y) => x<y?-1:x>y?1:0);",
@@ -85,6 +87,18 @@ def compile_to_js(ast_nodes):
         "const vals = m => Object.values(m);",
         "const has = (m,k) => k in m;",
         "const mrg = (a,b) => ({...a,...b});",
+        "",
+        "// Operator functions (for passing as values)",
+        "const _p = (...a) => a.reduce((x,y) => x+y);",
+        "const __ = (...a) => a.length === 1 ? -a[0] : a.reduce((x,y) => x-y);",
+        "const _s = (...a) => a.reduce((x,y) => x*y);",
+        "const _d = (a,b) => b !== 0 ? a/b : Infinity;",
+        "const _eq = (a,b) => a === b;",
+        "const _neq = (a,b) => a !== b;",
+        "const _lt = (a,b) => a < b;",
+        "const _gt = (a,b) => a > b;",
+        "const _lte = (a,b) => a <= b;",
+        "const _gte = (a,b) => a >= b;",
         "",
         "// Generated code",
         "",
@@ -228,9 +242,18 @@ def _sc_loop(args, ctx):
         vals.append(_compile_node(bindings[i + 1], ctx))
         i += 2
     init = "; ".join(f"let {n} = {v}" for n, v in zip(names, vals))
+    name_list = ", ".join(names)
     body_compiled = [_compile_node(b, ctx) for b in body]
     body_str = body_compiled[-1] if body_compiled else "null"
-    return f"(() => {{ {init}; while(true) {{ const _r = {body_str}; if (_r !== undefined) return _r; }} }})()"
+    # _Recur sentinel pattern: recur returns a tagged array, loop detects it
+    recur_fn = f"const _RECUR = Symbol(); const recur = ({name_list}) => ({{ _t: _RECUR, v: [{name_list}] }})"
+    unpack = "; ".join(f"{n} = _r.v[{i}]" for i, n in enumerate(names))
+    return (
+        f"(() => {{ {init}; {recur_fn}; "
+        f"while(true) {{ const _r = {body_str}; "
+        f"if (_r && _r._t === _RECUR) {{ {unpack}; }} "
+        f"else {{ return _r; }} }} }})()"
+    )
 
 
 def _sc_pipe(args, ctx):
@@ -319,6 +342,13 @@ def _compile_op(name, args, ctx):
 # ─── Helpers ───────────────────────────────────────────────────────────────
 
 def _mangle(name):
+    # Direct overrides for operators used as values
+    _sym_overrides = {
+        "+": "_p", "-": "__", "*": "_s", "/": "_d", "%": "ht_mod",
+        "=": "_eq", "!=": "_neq", "<": "_lt", ">": "_gt", "<=": "_lte", ">=": "_gte",
+    }
+    if name in _sym_overrides:
+        return _sym_overrides[name]
     replacements = {"-": "_", "?": "_q", "!": "_b", "~": "_t", "+": "_p", "|>": "_pipe"}
     result = name
     for old, new in replacements.items():

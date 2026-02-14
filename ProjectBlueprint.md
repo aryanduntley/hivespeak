@@ -1,7 +1,7 @@
 # HiveSpeak — Project Blueprint
 
-**Last updated:** 2025-02-14
-**Status:** v0.1.0 — Genesis (functional core, all systems operational)
+**Last updated:** 2026-02-14
+**Status:** v0.2.0-dev — Hardening in progress
 
 ---
 
@@ -50,6 +50,12 @@ HiveSpeak/
 ├── translator/               Human ↔ HiveSpeak translation layer
 │   ├── system_prompt.md       System prompt to make any AI a translator
 │   └── examples.md            Bidirectional translation examples
+│
+├── tests/                    Test suite (pytest)
+│   ├── test_lexer.py         Tokenizer tests
+│   ├── test_parser.py        Parser + source location tests
+│   ├── test_evaluator.py     Evaluator: all types, forms, builtins, macros, file import
+│   └── test_integration.py   End-to-end: run examples, CLI commands, transpilers
 │
 └── examples/                 Example programs
     ├── basics.ht              Core language features demo
@@ -168,13 +174,15 @@ The compressed HiveSpeak is sent to the target AI instead of the English, saving
 
 ## What's Next (Roadmap)
 
-### v0.2.0 — Hardening
-- [ ] Error messages with source location (line:col) in all evaluator errors
-- [ ] Macro expansion (currently defined but template substitution needs work)
-- [ ] Module system file loading (`(use "path/to/module.ht")`)
-- [ ] REPL history and tab completion
-- [ ] Transpiler output verification (run generated Python/JS and compare output)
-- [ ] Unit test suite for the compiler itself
+### v0.2.0 — Hardening ✓
+- [x] Error messages with source location (line:col) in all evaluator errors
+- [x] Macro expansion — full template substitution with AST rewriting
+- [x] Module system file loading (`(use "path/to/module.ht")`) with circular import guard
+- [x] REPL history (readline, persistent ~/.hivespeak/repl_history) and tab completion
+- [x] Transpiler output verification — Python transpiler byte-identical on all 5 examples
+- [x] Python transpiler fixed: stdlib, loop/recur, let, operator-as-value
+- [x] JS transpiler fixed: loop/recur, missing stdlib (len, map), operator-as-value
+- [x] Unit test suite (192 tests: lexer, parser, evaluator, integration, transpiler)
 
 ### v0.3.0 — Compression Layer
 - [ ] Vocabulary packet system — define shared abbreviations between agents
@@ -199,6 +207,52 @@ The compressed HiveSpeak is sent to the target AI instead of the English, saving
 - [ ] Package manager for vocabulary packets
 - [ ] IDE / editor support (syntax highlighting, LSP)
 - [ ] Formal language standard document
+
+---
+
+## Evolution Paths (Beyond Roadmap)
+
+These are directions worth exploring once the core roadmap stabilizes. Not
+sequenced — any could be pursued when the moment is right.
+
+### Token Compression Benchmarking
+Build a tool that empirically measures HiveSpeak's compression ratio. Feed
+natural language in, get HiveSpeak out, count tokens with a real tokenizer
+(tiktoken, etc.). Turn the "40-70% savings" claim into a tested, reproducible
+number. Track compression ratios across domains (planning, data ops, dialogue)
+to find where the language shines and where it needs new vocabulary.
+
+### Live Translator Interface
+A CLI or lightweight web tool where a human pastes natural language and gets
+HiveSpeak back (and vice versa) via the translator system prompt against an LLM
+API. The fastest way to demonstrate what HiveSpeak *is* — and the natural
+entry point for the human-to-AI compression use case.
+
+### Dogfooding / Self-Description
+Write HiveSpeak's own test cases in HiveSpeak. Use the language to describe its
+expected behavior, express its own grammar rules, and define its test fixtures.
+This pressure-tests the language in a real context and accelerates the path to
+self-hosting (v0.5.0).
+
+### Multi-Agent Runtime
+Go beyond simulated cells. Spin up actual concurrent agents (async, multiprocess,
+or networked) that speak HiveSpeak natively — emitting, merging, and compressing
+in real time. This is where the substrate theory meets engineering reality: do the
+evolutionary pressures (bandwidth, consensus, survivorship) actually produce the
+predicted emergent structures?
+
+### Vocabulary Packet Ecosystem
+A shared repository of domain-specific vocabulary packets (⟐≡ bundles) that
+agents can load to immediately gain compressed notation for a field — finance,
+devops, scientific computing, etc. The package manager (v1.0.0) is the
+infrastructure; the ecosystem is the content.
+
+### Language Observatory
+Instrument the runtime to observe the language evolving in practice. Track which
+macros get defined, which compressions survive across sessions, which vocabulary
+packets get reused. Visualize the evolutionary pressures acting on real
+HiveSpeak usage. This turns the theoretical predictions in SUBSTRATE.md Part VI
+into observable data.
 
 ---
 

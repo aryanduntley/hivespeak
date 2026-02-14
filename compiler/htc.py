@@ -17,7 +17,10 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from compiler.lexer import tokenize
 from compiler.parser import parse
-from compiler.evaluator import default_env, run_program, evaluate, _format_val
+from compiler.evaluator import (
+    default_env, run_program, evaluate, _format_val,
+    _SPECIAL_FORMS, _BUILTINS,
+)
 
 
 def run_file(path):
@@ -36,12 +39,51 @@ def run_source(source, env=None):
     return run_program(ast, env), env
 
 
+def _setup_readline(env):
+    """Configure readline for history and tab completion. Returns history path or None."""
+    try:
+        import readline
+    except ImportError:
+        return None
+
+    # History file
+    history_dir = os.path.expanduser("~/.hivespeak")
+    os.makedirs(history_dir, exist_ok=True)
+    history_path = os.path.join(history_dir, "repl_history")
+
+    try:
+        readline.read_history_file(history_path)
+    except FileNotFoundError:
+        pass
+
+    readline.set_history_length(1000)
+
+    # Tab completion
+    builtins = set(_SPECIAL_FORMS.keys()) | set(_BUILTINS.keys())
+    repl_cmds = {":q", ":env", ":reset", ":help"}
+
+    def completer(text, state):
+        # Gather completable symbols: builtins + user env bindings + repl commands
+        user_syms = {k for k in env if k != "__parent__"}
+        candidates = builtins | user_syms | repl_cmds
+        matches = [s for s in sorted(candidates) if s.startswith(text)]
+        return matches[state] if state < len(matches) else None
+
+    readline.set_completer(completer)
+    readline.set_completer_delims(" \t\n()[]{}\"';")
+    readline.parse_and_bind("tab: complete")
+
+    return history_path
+
+
 def repl():
     """Interactive Read-Eval-Print Loop."""
-    print("HiveSpeak v0.1.0 REPL")
-    print("Type expressions, or :q to quit\n")
+    print("HiveSpeak v0.2.0 REPL")
+    print("Type expressions, or :q to quit. Tab for completion.\n")
     env = default_env()
     buf = ""
+
+    history_path = _setup_readline(env)
 
     while True:
         try:
@@ -53,6 +95,13 @@ def repl():
 
         if line.strip() == ":q":
             break
+
+        if line.strip() == ":help":
+            print("  :q      quit")
+            print("  :env    show user-defined bindings")
+            print("  :reset  reset environment")
+            print("  Tab     auto-complete symbols")
+            continue
 
         if line.strip() == ":env":
             for k, v in sorted(env.items()):
@@ -79,6 +128,14 @@ def repl():
             print(f"Error: {e}", file=sys.stderr)
 
         buf = ""
+
+    # Save history on exit
+    if history_path:
+        try:
+            import readline
+            readline.write_history_file(history_path)
+        except Exception:
+            pass
 
 
 def compile_file(path, target):

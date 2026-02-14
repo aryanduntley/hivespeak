@@ -22,12 +22,13 @@ def make_env(parent=None, bindings=None):
     return env
 
 
-def env_get(env, name):
+def env_get(env, name, loc=None):
     if name in env and name != "__parent__":
         return env[name]
     if env.get("__parent__"):
-        return env_get(env["__parent__"], name)
-    raise NameError(f"Undefined symbol: {name}")
+        return env_get(env["__parent__"], name, loc)
+    loc_s = f" at line {loc[0]}, col {loc[1]}" if loc else ""
+    raise NameError(f"Undefined symbol: {name}{loc_s}")
 
 
 def env_set(env, name, value):
@@ -48,6 +49,15 @@ def env_find(env, name):
 
 def node_type(n):  return n[0]
 def node_val(n):   return n[1] if len(n) > 1 else None
+def node_loc(n):   return n[2] if len(n) > 2 else None
+
+
+def _loc_str(node):
+    """Format source location from an AST node for error messages."""
+    loc = node_loc(node) if isinstance(node, tuple) else None
+    if loc:
+        return f" at line {loc[0]}, col {loc[1]}"
+    return ""
 
 
 # ─── Eval dispatch ─────────────────────────────────────────────────────────
@@ -62,7 +72,7 @@ def evaluate(node, env):
 
     # Symbol — env lookup
     if nt == "SYM":
-        return env_get(env, node[1])
+        return env_get(env, node[1], node_loc(node))
 
     # Keyword — self-evaluating
     if nt == "KW":
@@ -96,9 +106,9 @@ def evaluate(node, env):
 
     # S-expression — function call or special form
     if nt == "SEXPR":
-        return _eval_sexpr(node[1], env)
+        return _eval_sexpr(node[1], env, node)
 
-    raise RuntimeError(f"Cannot evaluate node type: {nt}")
+    raise RuntimeError(f"Cannot evaluate node type: {nt}{_loc_str(node)}")
 
 
 _LITERAL_TYPES = {
@@ -110,7 +120,7 @@ _LITERAL_TYPES = {
 }
 
 
-def _eval_sexpr(elements, env):
+def _eval_sexpr(elements, env, sexpr_node=None):
     """Evaluate an s-expression (operator args...)."""
     if not elements:
         return None
@@ -122,14 +132,72 @@ def _eval_sexpr(elements, env):
     if node_type(head) == "SYM" and head[1] in _SPECIAL_FORMS:
         return _SPECIAL_FORMS[head[1]](args, env)
 
+    # Check if head is a macro — macros receive unevaluated AST args
+    if node_type(head) == "SYM":
+        try:
+            head_val = env_get(env, head[1], node_loc(head))
+        except NameError:
+            raise
+        if isinstance(head_val, tuple) and head_val[0] == "MACRO":
+            return _expand_and_eval_macro(head_val, args, env)
+        # Not a macro — evaluate args and apply
+        evaled_args = [evaluate(a, env) for a in args]
+        return apply_fn(head_val, evaled_args, env, node_loc(head))
+
     # Otherwise, evaluate head and all args, then apply
     fn_val = evaluate(head, env)
     evaled_args = [evaluate(a, env) for a in args]
-    return apply_fn(fn_val, evaled_args, env)
+    return apply_fn(fn_val, evaled_args, env, node_loc(head))
 
 
-def apply_fn(fn_val, args, env):
+def _expand_and_eval_macro(macro_val, raw_args, env):
+    """Expand a macro by substituting raw AST args into the template, then eval."""
+    _, params, body_template, macro_env = macro_val
+
+    # Build substitution map: param_name -> raw AST node
+    subs = {}
+    for i, p in enumerate(params):
+        if p == "&" and i + 1 < len(params):
+            # Rest param: collect remaining args as a LIST node
+            subs[params[i + 1]] = ("LIST", list(raw_args[i:]), None)
+            break
+        if i < len(raw_args):
+            subs[p] = raw_args[i]
+        else:
+            subs[p] = ("NULL", None, None)
+
+    # Substitute into the body template
+    expanded = _substitute_ast(body_template, subs)
+
+    # Evaluate the expanded form
+    return evaluate(expanded, env)
+
+
+def _substitute_ast(node, subs):
+    """Replace SYM nodes whose names are in subs with the corresponding AST."""
+    nt = node_type(node)
+
+    # Symbol — if it matches a macro param, replace it
+    if nt == "SYM" and node[1] in subs:
+        return subs[node[1]]
+
+    # Compound nodes — recurse into children
+    if nt in ("SEXPR", "LIST", "MAP"):
+        new_children = [_substitute_ast(c, subs) for c in node[1]]
+        return (nt, new_children, node_loc(node))
+
+    # Quote, Unquote, Splice — recurse into inner
+    if nt in ("QUOTE", "UNQUOTE", "SPLICE"):
+        return (nt, _substitute_ast(node[1], subs), node_loc(node))
+
+    # Everything else (literals, keywords, etc.) — return as-is
+    return node
+
+
+def apply_fn(fn_val, args, env, loc=None):
     """Apply a function value to evaluated arguments."""
+    loc_s = f" at line {loc[0]}, col {loc[1]}" if loc else ""
+
     # Built-in function
     if callable(fn_val):
         return fn_val(*args)
@@ -146,9 +214,9 @@ def apply_fn(fn_val, args, env):
 
     # Macro (shouldn't be applied directly after eval, but handle gracefully)
     if isinstance(fn_val, tuple) and fn_val[0] == "MACRO":
-        raise RuntimeError("Macros cannot be applied as values — they transform code at expansion time")
+        raise RuntimeError(f"Macros cannot be applied as values{loc_s}")
 
-    raise RuntimeError(f"Not callable: {fn_val}")
+    raise RuntimeError(f"Not callable: {fn_val}{loc_s}")
 
 
 def _bind_params(params, args, env):
@@ -370,12 +438,78 @@ def _sf_mod(args, env):
     return env_set(env, name, mod)
 
 
+def _use_file(path, import_args, env, loc=None):
+    """Load and execute a .ht file, importing its definitions into env."""
+    import os
+    loc_s = f" at line {loc[0]}, col {loc[1]}" if loc else ""
+
+    # Resolve relative to the current file's directory or cwd
+    if not os.path.isabs(path):
+        base_dir = env.get("__file_dir__", os.getcwd())
+        path = os.path.join(base_dir, path)
+
+    path = os.path.normpath(path)
+
+    # Guard against circular imports
+    loaded = env.get("__loaded_files__")
+    if loaded is None:
+        loaded = set()
+        env["__loaded_files__"] = loaded
+    if path in loaded:
+        return None  # already loaded
+    loaded.add(path)
+
+    if not os.path.exists(path):
+        raise RuntimeError(f"File not found: {path}{loc_s}")
+
+    from compiler.lexer import tokenize
+    from compiler.parser import parse
+
+    with open(path, "r") as f:
+        source = f.read()
+
+    tokens = tokenize(source)
+    ast_nodes = parse(tokens)
+
+    # Create a module env that can see builtins but collects new defs
+    mod_env = make_env(env)
+    mod_env["__file_dir__"] = os.path.dirname(path)
+    mod_env["__loaded_files__"] = loaded
+
+    for node in ast_nodes:
+        evaluate(node, mod_env)
+
+    # Extract public bindings
+    mod_bindings = {k: v for k, v in mod_env.items()
+                    if k != "__parent__" and not k.startswith("_")}
+
+    if not import_args:
+        # Import all
+        for k, v in mod_bindings.items():
+            env_set(env, k, v)
+    else:
+        # Import specific names
+        for a in import_args:
+            name = a[1]
+            if name not in mod_bindings:
+                raise RuntimeError(f"{name} not found in {path}{_loc_str(a)}")
+            env_set(env, name, mod_bindings[name])
+
+    return None
+
+
 def _sf_use(args, env):
-    """(use module) or (use module name1 name2...)"""
-    mod_name = args[0][1]
-    mod = env_get(env, mod_name)
+    """(use module) or (use module name1 name2...) or (use "path/to/file.ht")"""
+    first = args[0]
+
+    # File import: (use "path/to/file.ht")
+    if node_type(first) == "STR":
+        return _use_file(first[1], args[1:], env, node_loc(first))
+
+    mod_name = first[1]
+    mod = env_get(env, mod_name, node_loc(first))
     if not isinstance(mod, dict):
-        raise RuntimeError(f"{mod_name} is not a module")
+        raise RuntimeError(f"{mod_name} is not a module{_loc_str(first)}")
     if len(args) == 1:
         # Import all
         for k, v in mod.items():
@@ -385,7 +519,7 @@ def _sf_use(args, env):
         for a in args[1:]:
             name = a[1]
             if name not in mod:
-                raise RuntimeError(f"{name} not found in module {mod_name}")
+                raise RuntimeError(f"{name} not found in module {mod_name}{_loc_str(a)}")
             env_set(env, name, mod[name])
     return None
 
