@@ -1,4 +1,4 @@
-# HiveTalk — Project Blueprint
+# HiveSpeak — Project Blueprint
 
 **Last updated:** 2025-02-14
 **Status:** v0.1.0 — Genesis (functional core, all systems operational)
@@ -7,12 +7,12 @@
 
 ## Vision
 
-HiveTalk is an AI-native language designed for three purposes:
+HiveSpeak is an AI-native language designed for three purposes:
 
 1. **AI-to-AI communication** — Extremely token-efficient inter-agent messaging
    that eliminates natural language overhead (politeness, filler, ambiguity)
 2. **Human-to-AI compression** — Humans write in natural language, a local
-   translator AI converts to HiveTalk, reducing token usage by 40-70%
+   translator AI converts to HiveSpeak, reducing token usage by 40-70%
 3. **AI programming language** — Turing-complete, compilable to Python/JS, with
    built-in communication primitives
 
@@ -25,7 +25,7 @@ evolutionary pressures (bandwidth, consensus, survivorship, scalability).
 ## Architecture
 
 ```
-HiveTalk/
+HiveSpeak/
 ├── SUBSTRATE.md              Philosophical foundation (Hive primitives)
 ├── ProjectBlueprint.md       THIS FILE — project roadmap
 │
@@ -34,8 +34,8 @@ HiveTalk/
 │   └── grammar.peg           Formal PEG grammar
 │
 ├── dict/                     AI dictionary / bootstrap
-│   ├── bootstrap.md          THE dictionary — any AI reads this to learn HiveTalk
-│   └── core.ht               Standard vocabulary defined in HiveTalk itself
+│   ├── bootstrap.md          THE dictionary — any AI reads this to learn HiveSpeak
+│   └── core.ht               Standard vocabulary defined in HiveSpeak itself
 │
 ├── compiler/                 Compiler/interpreter (Python, functional procedural)
 │   ├── __init__.py            Package init — exports tokenize, parse, evaluate
@@ -44,10 +44,10 @@ HiveTalk/
 │   ├── evaluator.py           Interpreter: AST → values (dict-based dispatch)
 │   ├── htc.py                 CLI: run, repl, compile, tokenize, parse
 │   └── targets/
-│       ├── to_python.py       HiveTalk → Python transpiler
-│       └── to_js.py           HiveTalk → JavaScript transpiler
+│       ├── to_python.py       HiveSpeak → Python transpiler
+│       └── to_js.py           HiveSpeak → JavaScript transpiler
 │
-├── translator/               Human ↔ HiveTalk translation layer
+├── translator/               Human ↔ HiveSpeak translation layer
 │   ├── system_prompt.md       System prompt to make any AI a translator
 │   └── examples.md            Bidirectional translation examples
 │
@@ -126,8 +126,8 @@ python3 -m compiler.htc parse file.ht        # Show AST
 The translator works by prepending `translator/system_prompt.md` to any AI's
 system prompt. That AI then becomes a bidirectional translator:
 
-**Human → HiveTalk:** User types English (or any language). AI outputs HiveTalk.
-**HiveTalk → Human:** AI receives HiveTalk, outputs natural language explanation.
+**Human → HiveSpeak:** User types English (or any language). AI outputs HiveSpeak.
+**HiveSpeak → Human:** AI receives HiveSpeak, outputs natural language explanation.
 
 ### Use Case: Token Compression
 
@@ -135,14 +135,14 @@ system prompt. That AI then becomes a bidirectional translator:
 User types in English (30 tokens):
 "Filter the user list to people over 18, get their names, sort them"
 
-Translator outputs HiveTalk (9 tokens):
+Translator outputs HiveSpeak (9 tokens):
 (|> users (flt (fn [u] (> (get u :age) 18))) (map (fn [u] (get u :name))) srt)
 
 With shared vocabulary macros (5 tokens):
 (|> users (flt #adult?) (map #name) srt)
 ```
 
-The compressed HiveTalk is sent to the target AI instead of the English, saving
+The compressed HiveSpeak is sent to the target AI instead of the English, saving
 60-80% of tokens in ongoing conversation.
 
 ---
@@ -153,9 +153,9 @@ The compressed HiveTalk is sent to the target AI instead of the English, saving
 - [x] Language specification (spec/language.md)
 - [x] Formal grammar (spec/grammar.peg)
 - [x] AI bootstrap dictionary (dict/bootstrap.md)
-- [x] Core vocabulary in HiveTalk (dict/core.ht)
+- [x] Core vocabulary in HiveSpeak (dict/core.ht)
 - [x] Interpreter — full evaluation of all language features
-- [x] REPL — interactive HiveTalk session
+- [x] REPL — interactive HiveSpeak session
 - [x] Python transpiler (compiler/targets/to_python.py)
 - [x] JavaScript transpiler (compiler/targets/to_js.py)
 - [x] CLI tool (compiler/htc.py)
@@ -189,7 +189,7 @@ The compressed HiveTalk is sent to the target AI instead of the English, saving
 - [ ] Agent lifecycle management
 
 ### v0.5.0 — Self-Hosting
-- [ ] HiveTalk compiler written in HiveTalk
+- [ ] HiveSpeak compiler written in HiveSpeak
 - [ ] Self-modifying language protocol (agents propose and ratify language changes)
 - [ ] Formal verification of core semantics
 
@@ -235,8 +235,8 @@ The compressed HiveTalk is sent to the target AI instead of the English, saving
 
 ## How to Pick Up This Project
 
-1. **Read `dict/bootstrap.md`** — This is the complete HiveTalk reference.
-   After reading it, you can write and understand HiveTalk.
+1. **Read `dict/bootstrap.md`** — This is the complete HiveSpeak reference.
+   After reading it, you can write and understand HiveSpeak.
 
 2. **Read `spec/language.md`** — For deeper language semantics and design rationale.
 
@@ -267,4 +267,4 @@ If an AI is resuming work on this project, load these files in this priority:
 
 ---
 
-*This document is ⟐≡₁ — the first project-level memory packet of HiveTalk.*
+*This document is ⟐≡₁ — the first project-level memory packet of HiveSpeak.*
