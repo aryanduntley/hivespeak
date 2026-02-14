@@ -1,0 +1,51 @@
+; Multi-agent Planning in HiveTalk
+; Three agents negotiate a deployment plan
+
+; ─── Create agent cells ───
+(def dev (cell {:role "developer" :ready T :estimate 3}))
+(def ops (cell {:role "ops" :ready T :estimate 5}))
+(def qa (cell {:role "qa" :ready F :estimate 2}))
+
+; ─── Dev proposes a plan ───
+(def plan-v1
+  (suggest~ {:action "deploy"
+              :version "2.1.0"
+              :steps ["build" "test" "stage" "prod"]
+              :timeline 3}))
+(print (fmt "Dev proposes: {}" plan-v1))
+
+; ─── Ops counter-proposes ───
+(def plan-v2
+  (suggest~ {:action "deploy"
+              :version "2.1.0"
+              :steps ["build" "test" "stage" "canary" "prod"]
+              :timeline 5
+              :note "adding canary step for safety"}))
+(print (fmt "Ops counter-proposes: {}" plan-v2))
+
+; ─── QA rejects — not ready ───
+(def qa-response
+  (reject- {:ref plan-v2
+             :reason "test suite not updated for 2.1.0"
+             :blocker "missing integration tests"
+             :eta 2}))
+(print (fmt "QA rejects: {}" qa-response))
+
+; ─── Negotiate: Dev asks QA for timeline ───
+(def dev-query
+  (ask? {:about "test readiness"
+          :for-version "2.1.0"
+          :need "completion date"}))
+(print (fmt "Dev asks: {}" dev-query))
+
+; ─── Merge all agents to find consensus ───
+(set-state qa :ready T)  ; QA finishes tests
+(def team (merge [dev ops qa] :on [:ready :estimate]))
+(print (fmt "Team state: {}" team))
+
+; ─── Compress to final plan ───
+(def final (compress team))
+(print (fmt "Final plan packet: {}" final))
+
+; ─── All accept ───
+(print (accept+ {:ref final :msg "deployment approved"}))

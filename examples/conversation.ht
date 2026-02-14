@@ -1,0 +1,44 @@
+; AI-to-AI Conversation in HiveTalk
+; Demonstrates cell creation, emission, merging, and compression
+
+; ─── Create two AI agent cells ───
+(def agent-a (cell {:role "analyst" :domain "security" :confidence 0.0}))
+(def agent-b (cell {:role "planner" :domain "infrastructure" :confidence 0.0}))
+
+(print (fmt "Agent A: {}" agent-a))
+(print (fmt "Agent B: {}" agent-b))
+
+; ─── Agent A emits an assertion ───
+(def msg1 (assert! {:topic "vulnerability"
+                     :claim "SQL injection in login endpoint"
+                     :severity "critical"
+                     :confidence 0.92}))
+(print (fmt "A asserts: {}" msg1))
+
+; ─── Emit to Agent B ───
+(emit agent-a agent-b msg1)
+(print (fmt "B inbox: {}" (recv agent-b)))
+
+; ─── Agent B responds with a suggestion ───
+(def msg2 (suggest~ {:topic "vulnerability"
+                      :action "deploy WAF rule"
+                      :timeline "immediate"
+                      :confidence 0.85}))
+(print (fmt "B suggests: {}" msg2))
+
+; ─── Agent A accepts ───
+(def msg3 (accept+ {:ref msg2 :note "proceeding with WAF deployment"}))
+(print (fmt "A accepts: {}" msg3))
+
+; ─── Merge agents to form collective ───
+(set-state agent-a :confidence 0.92)
+(set-state agent-b :confidence 0.85)
+(def collective (merge [agent-a agent-b] :on [:confidence :domain]))
+(print (fmt "Collective: {}" collective))
+
+; ─── Compress collective to memory packet ───
+(def result (compress collective))
+(print (fmt "Compression result: {}" result))
+
+; ─── The compressed packet is now referenceable ───
+(print "Conversation complete — packet stored for future reference")

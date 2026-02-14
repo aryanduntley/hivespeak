@@ -1,0 +1,73 @@
+; HiveTalk Core Vocabulary — defined in HiveTalk itself
+; This file is loaded by the interpreter to bootstrap common patterns.
+
+; ─── Functional Combinators ───────────────────────────────────────────────
+
+(def (identity x) x)
+(def (constantly v) (fn [& _] v))
+(def (complement f) (fn [& args] (not (f args))))
+(def (compose f g) (fn [x] (f (g x))))
+(def (partial f & bound) (fn [& args] (f (cat bound args))))
+(def (flip f) (fn [a b] (f b a)))
+
+; ─── Predicates ───────────────────────────────────────────────────────────
+
+(def (zero? n) (= n 0))
+(def (pos? n) (> n 0))
+(def (neg? n) (< n 0))
+(def (even? n) (= (% n 2) 0))
+(def (odd? n) (= (% n 2) 1))
+(def (empty? coll) (= (len coll) 0))
+
+; ─── Numeric ──────────────────────────────────────────────────────────────
+
+(def (inc n) (+ n 1))
+(def (dec n) (- n 1))
+(def (abs n) (if (< n 0) (- 0 n) n))
+(def (max a b) (if (> a b) a b))
+(def (min a b) (if (< a b) a b))
+(def (clamp v lo hi) (max lo (min hi v)))
+
+; ─── List Utilities ───────────────────────────────────────────────────────
+
+(def (first lst) (hd lst))
+(def (rest lst) (tl lst))
+(def (last lst) (nth lst (- (len lst) 1)))
+(def (take n lst) (slc lst 0 n))
+(def (drop n lst) (slc lst n))
+(def (count pred lst) (len (flt pred lst)))
+(def (sum lst) (red + 0 lst))
+(def (product lst) (red * 1 lst))
+
+; ─── Map Utilities ────────────────────────────────────────────────────────
+
+(def (update m k f) (put m k (f (get m k))))
+(def (select-keys m ks) (red (fn [acc k] (if (has m k) (put acc k (get m k)) acc)) {} ks))
+
+; ─── String Utilities ─────────────────────────────────────────────────────
+
+(def (blank? s) (or (null? s) (= (len s) 0)))
+(def (trim s) s)  ; placeholder — would need regex
+(def (starts-with? s prefix) (= (slc s 0 (len prefix)) prefix))
+(def (ends-with? s suffix) (= (slc s (- (len s) (len suffix))) suffix))
+(def (repeat-str s n)
+  (loop [i 0 acc ""]
+    (if (= i n) acc (recur (+ i 1) (cat acc s)))))
+
+; ─── Communication Shorthand ──────────────────────────────────────────────
+
+; Short aliases for common patterns
+(def (tell target content) (assert! {:to target :content content}))
+(def (query target about) (ask? {:to target :about about}))
+(def (cmd target action) (request! {:to target :action action}))
+(def (propose content) (suggest~ {:content content}))
+(def (agree ref) (accept+ {:ref ref}))
+(def (disagree ref reason) (reject- {:ref ref :reason reason}))
+
+; ─── Pipeline Helpers ─────────────────────────────────────────────────────
+
+(def (tap f)
+  (fn [x] (do (f x) x)))  ; execute side effect, pass value through
+
+(def (when-fn pred f)
+  (fn [x] (if (pred x) (f x) x)))

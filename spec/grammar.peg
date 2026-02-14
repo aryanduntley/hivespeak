@@ -1,0 +1,83 @@
+# HiveTalk PEG Grammar v0.1.0
+# =========================
+# This is the formal grammar for parsing HiveTalk source code.
+# Parser generators (e.g., Python's parsimonious, PEG.js, pest) can
+# consume this directly.
+
+program     <- spacing expr* EOF
+
+expr        <- spacing (s_expr / list_lit / map_lit / quote_expr /
+               splice_unquote / unquote_expr / hash_ref / pipe_expr /
+               keyword / string / float / integer / boolean / null /
+               symbol) spacing
+
+# S-expressions: (operator operands...)
+s_expr      <- LPAREN expr* RPAREN
+
+# Collection literals
+list_lit    <- LBRACKET expr* RBRACKET
+map_lit     <- LBRACE (expr expr)* RBRACE
+
+# Quoting and unquoting
+quote_expr      <- "'" expr
+unquote_expr    <- "~" !"@" expr
+splice_unquote  <- "~@" expr
+
+# Hash references
+hash_ref    <- "#" hex_chars
+
+# Pipeline (parsed as normal s-expr, handled in semantics)
+pipe_expr   <- LPAREN "|>" expr+ RPAREN
+
+# === Atoms ===
+
+integer     <- ~"-"? [0-9]+
+float       <- ~"-"? [0-9]+ "." [0-9]+
+string      <- '"' (!'"' .)* '"'
+boolean     <- "T" / "F"
+null        <- "N"
+keyword     <- ":" symbol_chars
+symbol      <- symbol_start symbol_cont*
+hash_ref    <- "#" hex_chars
+
+# === Character classes ===
+
+symbol_start <- [a-zA-Z_!?+\-*/<>=&|%]
+symbol_cont  <- [a-zA-Z0-9_!?\-+*/<>=&|%.]
+symbol_chars <- [a-zA-Z_] [a-zA-Z0-9_\-]*
+hex_chars    <- [a-fA-F0-9]+
+
+# === Delimiters ===
+
+LPAREN      <- "("
+RPAREN      <- ")"
+LBRACKET    <- "["
+RBRACKET    <- "]"
+LBRACE      <- "{"
+RBRACE      <- "}"
+
+# === Whitespace & Comments ===
+
+spacing     <- (whitespace / comment)*
+whitespace  <- [ \t\n\r]+
+comment     <- ";" (![\n\r] .)* [\n\r]?
+
+EOF         <- !.
+
+# === Operator Table (for reference, not grammar) ===
+#
+# Arithmetic:  + - * / %
+# Comparison:  = != < > <= >=
+# Logic:       and or not
+# String:      cat len slc idx spl upr lwr fmt
+# List:        hd tl nth push map flt red srt rev zip flat uniq any all
+# Map:         get put del keys vals has mrg
+# Control:     if match do loop recur fn def let
+# Hive:        cell emit recv merge compress ref packet
+# Comms:       assert! ask? request! suggest~ accept+ reject-
+# Module:      mod use pub
+# Meta:        macro quote eval type
+# Pipeline:    |>
+# I/O:         print read-line read-file write-file
+# Error:       try catch throw
+# Concurrency: spawn select self

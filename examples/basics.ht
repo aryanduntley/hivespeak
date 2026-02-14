@@ -1,0 +1,96 @@
+; HiveTalk Basics — core language features
+
+; ─── Literals ───
+(print 42)
+(print 3.14)
+(print "hello HiveTalk")
+(print T)
+(print F)
+(print N)
+
+; ─── Arithmetic ───
+(print (+ 2 3))          ; 5
+(print (* 4 5))          ; 20
+(print (- 10 3))         ; 7
+(print (/ 10 3))         ; 3.333
+(print (% 10 3))         ; 1
+(print (+ 1 2 3 4 5))   ; 15 (variadic)
+
+; ─── Comparison ───
+(print (= 1 1))          ; T
+(print (< 1 2))          ; T
+(print (> 5 3))          ; T
+
+; ─── Binding ───
+(def x 42)
+(def name "HiveTalk")
+(print x)
+(print name)
+
+; ─── Functions ───
+(def (square n) (* n n))
+(print (square 5))        ; 25
+
+(def (add a b) (+ a b))
+(print (add 10 20))       ; 30
+
+; Higher-order
+(def doubler (fn [x] (* x 2)))
+(print (doubler 21))      ; 42
+
+; ─── Let (local scope) ───
+(print
+  (let [a 10 b 20]
+    (+ a b)))             ; 30
+
+; ─── Conditionals ───
+(def (abs n)
+  (if (< n 0) (- 0 n) n))
+(print (abs -7))          ; 7
+(print (abs 5))           ; 5
+
+; ─── Lists ───
+(def nums [1 2 3 4 5])
+(print (len nums))        ; 5
+(print (hd nums))         ; 1
+(print (tl nums))         ; [2 3 4 5]
+(print (nth nums 2))      ; 3
+(print (push nums 6))     ; [1 2 3 4 5 6]
+(print (rev nums))        ; [5 4 3 2 1]
+
+; Map, filter, reduce
+(print (map (fn [x] (* x 2)) nums))     ; [2 4 6 8 10]
+(print (flt (fn [x] (> x 3)) nums))     ; [4 5]
+(print (red + 0 nums))                   ; 15
+
+; ─── Maps ───
+(def person {:name "Alice" :age 30})
+(print (get person :name))   ; Alice
+(print (get person :age))    ; 30
+(print (put person :city "NYC"))
+(print (keys person))
+(print (has person :name))   ; T
+
+; ─── Pipeline ───
+(print
+  (|> [1 2 3 4 5 6 7 8 9 10]
+    (flt (fn [x] (= (% x 2) 0)))
+    (map (fn [x] (* x x)))
+    (red + 0)))
+; => 220 (sum of squares of even numbers 1-10)
+
+; ─── Strings ───
+(print (cat "Hello" " " "World"))    ; Hello World
+(print (len "HiveTalk"))             ; 8
+(print (upr "hello"))                ; HELLO
+(print (spl "a,b,c" ","))            ; [a b c]
+(print (fmt "x={}, y={}" 10 20))     ; x=10, y=20
+
+; ─── Loop/Recur ───
+(def (factorial n)
+  (loop [i n acc 1]
+    (if (<= i 1)
+      acc
+      (recur (- i 1) (* acc i)))))
+
+(print (factorial 10))    ; 3628800

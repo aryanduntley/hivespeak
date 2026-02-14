@@ -1,0 +1,47 @@
+; Simple Calculator in HiveTalk
+
+(def (calc op a b)
+  (match op
+    "+" (+ a b)
+    "-" (- a b)
+    "*" (* a b)
+    "/" (if (= b 0) "Error: divide by zero" (/ a b))
+    "%" (% a b)
+    _   (fmt "Unknown operator: {}" op)))
+
+; Run some calculations
+(print (fmt "10 + 5 = {}" (calc "+" 10 5)))
+(print (fmt "10 - 3 = {}" (calc "-" 10 3)))
+(print (fmt "7 * 6 = {}"  (calc "*" 7 6)))
+(print (fmt "100 / 4 = {}" (calc "/" 100 4)))
+(print (fmt "10 %% 3 = {}" (calc "%" 10 3)))
+(print (fmt "10 / 0 = {}" (calc "/" 10 0)))
+
+; Chain of operations: ((5 + 3) * 2) - 1
+(def result (- (* (+ 5 3) 2) 1))
+(print (fmt "((5 + 3) * 2) - 1 = {}" result))
+
+; Same thing with let for readability
+(print (fmt "step-by-step = {}"
+  (let [a (+ 5 3)
+        b (* a 2)
+        c (- b 1)]
+    c)))
+
+; Expression evaluator — takes a list like [10 "+" 5] and computes it
+(def (eval-expr expr)
+  (calc (nth expr 1) (nth expr 0) (nth expr 2)))
+
+(print (fmt "[20 * 3] = {}" (eval-expr [20 "*" 3])))
+(print (fmt "[15 / 4] = {}" (eval-expr [15 "/" 4])))
+
+; Batch calculator — evaluate a list of expressions
+(def expressions
+  [[10 "+" 5]
+   [20 "-" 8]
+   [7 "*" 6]
+   [100 "/" 25]
+   [17 "%" 5]])
+
+(def results (map eval-expr expressions))
+(print (fmt "Batch results: {}" results))
