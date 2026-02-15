@@ -2,8 +2,8 @@
 
 (def (calc op a b)
   (match op
-    "+" (+ a b)
-    "-" (- a b)
+    "+" (add a b)
+    "-" (sub a b)
     "*" (* a b)
     "/" (if (= b 0) "Error: divide by zero" (/ a b))
     "%" (% a b)
@@ -18,14 +18,14 @@
 (print (fmt "10 / 0 = {}" (calc "/" 10 0)))
 
 ; Chain of operations: ((5 + 3) * 2) - 1
-(def result (- (* (+ 5 3) 2) 1))
+(def result (sub (* (add 5 3) 2) 1))
 (print (fmt "((5 + 3) * 2) - 1 = {}" result))
 
 ; Same thing with let for readability
 (print (fmt "step-by-step = {}"
-  (let [a (+ 5 3)
+  (let [a (add 5 3)
         b (* a 2)
-        c (- b 1)]
+        c (sub b 1)]
     c)))
 
 ; Expression evaluator — takes a list like [10 "+" 5] and computes it

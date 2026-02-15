@@ -57,26 +57,26 @@ def test_atom_has_loc():
     assert node_loc(node) == (1, 1)
 
 def test_multiline_loc():
-    nodes = ast("42\n(+ 1 2)")
+    nodes = ast("42\n(add 1 2)")
     assert node_loc(nodes[0]) == (1, 1)
     assert node_loc(nodes[1]) == (2, 1)
-    # The + symbol inside the sexpr
-    plus_sym = nodes[1][1][0]
-    assert node_loc(plus_sym) == (2, 2)
+    # The add symbol inside the sexpr
+    add_sym = nodes[1][1][0]
+    assert node_loc(add_sym) == (2, 2)
 
 
 # ─── Compound ────────────────────────────────────────────────────────────
 
 def test_sexpr():
-    node = ast1("(+ 1 2)")
+    node = ast1("(add 1 2)")
     assert node[0] == "SEXPR"
     children = node[1]
-    assert nv(children[0]) == ("SYM", "+")
+    assert nv(children[0]) == ("SYM", "add")
     assert nv(children[1]) == ("INT", 1)
     assert nv(children[2]) == ("INT", 2)
 
 def test_nested_sexpr():
-    node = ast1("(+ (* 2 3) 4)")
+    node = ast1("(add (* 2 3) 4)")
     assert node[0] == "SEXPR"
     inner = node[1][1]
     assert inner[0] == "SEXPR"
@@ -111,20 +111,25 @@ def test_quote():
     assert nv(node[1]) == ("SYM", "x")
 
 def test_unquote():
-    node = ast1("~x")
+    node = ast1(",x")
     assert node[0] == "UNQUOTE"
     assert nv(node[1]) == ("SYM", "x")
 
 def test_splice():
-    node = ast1("~@x")
+    node = ast1(",@x")
     assert node[0] == "SPLICE"
     assert nv(node[1]) == ("SYM", "x")
+
+def test_tilde_as_symbol():
+    node = ast1("(~ :temp 68)")
+    assert node[0] == "SEXPR"
+    assert nv(node[1][0]) == ("SYM", "~")
 
 
 # ─── Multiple expressions ───────────────────────────────────────────────
 
 def test_multiple_top_level():
-    nodes = ast("42 (+ 1 2)")
+    nodes = ast("42 (add 1 2)")
     assert len(nodes) == 2
     assert nv(nodes[0]) == ("INT", 42)
     assert nodes[1][0] == "SEXPR"
@@ -146,7 +151,7 @@ def test_fn():
     assert nv(params[1][0]) == ("SYM", "x")
 
 def test_let():
-    node = ast1("(let [a 1 b 2] (+ a b))")
+    node = ast1("(let [a 1 b 2] (add a b))")
     assert node[0] == "SEXPR"
     bindings = node[1][1]
     assert bindings[0] == "LIST"

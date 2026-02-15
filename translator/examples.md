@@ -28,7 +28,7 @@ Where compression macros are used, the macro definition is shown on first use.
 ```
 ; First, define the compression macro
 (macro (fact topic val & kvs)
-  '(assert! (mrg {:topic ~topic :claim ~val} ~@kvs)))
+  '(assert! (mrg {:topic ,topic :claim ,val} ,@kvs)))
 
 (fact :temperature 68 {:unit :fahrenheit :location :outside})
 ```
@@ -47,7 +47,7 @@ Where compression macros are used, the macro definition is shown on first use.
 **HiveSpeak (compressed)**:
 ```
 (macro (believe claim conf)
-  '(assert! {:claim ~claim :confidence ~conf}))
+  '(assert! {:claim ,claim :confidence ,conf}))
 
 (believe {:event :market-recovery :by :Q3} 0.6)
 ```
@@ -83,7 +83,7 @@ Where compression macros are used, the macro definition is shown on first use.
 **HiveSpeak (compressed)**:
 ```
 (macro (status-report m)
-  '(assert! {:topic :system-status :claim ~m}))
+  '(assert! {:topic :system-status :claim ,m}))
 
 (status-report {:server :healthy
                 :cpu 23
@@ -125,7 +125,7 @@ Where compression macros are used, the macro definition is shown on first use.
 **HiveSpeak (compressed)**:
 ```
 (macro (q about want)
-  '(ask? {:about ~about :want ~want}))
+  '(ask? {:about ,about :want ,want}))
 
 (q :deployment :status)
 ```
@@ -144,7 +144,7 @@ Where compression macros are used, the macro definition is shown on first use.
 **HiveSpeak (compressed)**:
 ```
 (macro (yn? about)
-  '(ask? {:about ~about :want :bool}))
+  '(ask? {:about ,about :want :bool}))
 
 (yn? :backup-complete)
 ```
@@ -164,7 +164,7 @@ Where compression macros are used, the macro definition is shown on first use.
 **HiveSpeak (compressed)**:
 ```
 (macro (count? entity & filters)
-  '(ask? {:about ~entity :want :count :filter ~@filters}))
+  '(ask? {:about ,entity :want :count :filter ,@filters}))
 
 (count? :tickets {:status :unresolved :assigned-to :infrastructure-team})
 ```
@@ -185,7 +185,7 @@ Where compression macros are used, the macro definition is shown on first use.
 **HiveSpeak (compressed)**:
 ```
 (macro (compare? items on context)
-  '(ask? {:about :comparison :candidates ~items :metric ~on :context ~context}))
+  '(ask? {:about :comparison :candidates ,items :metric ,on :context ,context}))
 
 (compare? ["GPT-4" "Claude"] :performance :benchmark)
 ```
@@ -225,7 +225,7 @@ Where compression macros are used, the macro definition is shown on first use.
 **HiveSpeak (compressed)**:
 ```
 (macro (do! action target & opts)
-  '(request! (mrg {:action ~action :target ~target} ~@opts)))
+  '(request! (mrg {:action ,action :target ,target} ,@opts)))
 
 (do! :delete :temp-files)
 ```
@@ -248,7 +248,7 @@ Where compression macros are used, the macro definition is shown on first use.
 **HiveSpeak (compressed)**:
 ```
 (macro (then & steps)
-  '(request! {:action :sequence :steps [~@steps]}))
+  '(request! {:action :sequence :steps [,@steps]}))
 
 (then
   (do! :resize :image {:width 800 :height 600})
@@ -261,7 +261,7 @@ Where compression macros are used, the macro definition is shown on first use.
 
 **HiveSpeak (verbose)**:
 ```
-(if (> disk-usage 90)
+(if (gt disk-usage 90)
   (do
     (request! {:action :archive :target :old-logs})
     (request! {:action :notify :target :admin :payload {:alert :disk-usage :level :high}}))
@@ -271,7 +271,7 @@ Where compression macros are used, the macro definition is shown on first use.
 **HiveSpeak (compressed)**:
 ```
 (macro (when-above metric threshold & actions)
-  '(if (> ~metric ~threshold) (do ~@actions) N))
+  '(if (gt ,metric ,threshold) (do ,@actions) N))
 
 (when-above disk-usage 90
   (do! :archive :old-logs)
@@ -294,7 +294,7 @@ Where compression macros are used, the macro definition is shown on first use.
 **HiveSpeak (compressed)**:
 ```
 (macro (assign team task & opts)
-  '(emit self :target ~team (request! (mrg {:action ~task} ~@opts))))
+  '(emit self :target ,team (request! (mrg {:action ,task} ,@opts))))
 
 (assign :data-team :prepare {:output :summary-report
                               :deliver-to :executive-board
@@ -317,7 +317,7 @@ Where compression macros are used, the macro definition is shown on first use.
   (group-by (fn [row] (get row :region)))
   (map (fn [group]
     {:region (get (hd group) :region)
-     :avg-sales (/ (red + 0 (map (fn [r] (get r :sales)) group))
+     :avg-sales (/ (red add 0 (map (fn [r] (get r :sales)) group))
                    (len group))}))
   (srt-by (fn [r] (get r :avg-sales)) :desc))
 ```
@@ -325,16 +325,16 @@ Where compression macros are used, the macro definition is shown on first use.
 **HiveSpeak (compressed)**:
 ```
 (macro (etl source & steps)
-  '(|> (read-file ~source) parse-csv ~@steps))
+  '(|> (read-file ,source) parse-csv ,@steps))
 
 (macro (clean data)
-  '(flt (fn [row] (not (any null? (vals row)))) ~data))
+  '(flt (fn [row] (not (any null? (vals row)))) ,data))
 
 (macro (avg-by group-key val-key data)
-  '(|> ~data
-     (group-by (fn [r] (get r ~group-key)))
-     (map (fn [g] {~group-key (get (hd g) ~group-key)
-                   :avg (/ (red + 0 (map (fn [r] (get r ~val-key)) g)) (len g))}))))
+  '(|> ,data
+     (group-by (fn [r] (get r ,group-key)))
+     (map (fn [g] {,group-key (get (hd g) ,group-key)
+                   :avg (/ (red add 0 (map (fn [r] (get r ,val-key)) g)) (len g))}))))
 
 (|> (etl "sales.csv") clean (avg-by :region :sales) (srt-by :avg :desc))
 ```
@@ -363,11 +363,11 @@ Where compression macros are used, the macro definition is shown on first use.
 ```
 (macro (ci-cd branch on-pass on-fail)
   '(do
-     (do! :git-pull {:branch ~branch})
+     (do! :git-pull {:branch ,branch})
      (def result (do! :run-tests))
      (if (= (get result :status) :all-pass)
-       ~on-pass
-       (~on-fail result))))
+       ,on-pass
+       (,on-fail result))))
 
 (ci-cd :main
   (then
@@ -392,13 +392,13 @@ Where compression macros are used, the macro definition is shown on first use.
                :expired (do
                  (emit self :target customer
                    (request! {:action :send-email :template :renewal-reminder}))
-                 (put acc :expired (+ (get acc :expired) 1)))
+                 (put acc :expired (add (get acc :expired) 1)))
                :active (if (<= days-left 7)
                  (do
                    (emit self :target customer
                      (request! {:action :send-email :template :expiry-warning}))
-                   (put acc :warning (+ (get acc :warning) 1)))
-                 (put acc :ok (+ (get acc :ok) 1)))
+                   (put acc :warning (add (get acc :warning) 1)))
+                 (put acc :ok (add (get acc :ok) 1)))
                _ acc)))
          {:expired 0 :warning 0 :ok 0}
          customers))
@@ -409,12 +409,12 @@ Where compression macros are used, the macro definition is shown on first use.
 ```
 (macro (tally-by classifier actions items init)
   '(red (fn [acc item]
-          (let [cls (~classifier item)]
-            ((get ~actions cls (fn [a i] a)) acc item)))
-        ~init ~items))
+          (let [cls (,classifier item)]
+            ((get ,actions cls (fn [a i] a)) acc item)))
+        ,init ,items))
 
 (macro (notify target template)
-  '(emit self :target ~target (do! :send-email {:template ~template})))
+  '(emit self :target ,target (do! :send-email {:template ,template})))
 
 (def results
   (tally-by
@@ -422,9 +422,9 @@ Where compression macros are used, the macro definition is shown on first use.
               :expired :expired
               :active (if (<= (get c :days-remaining) 7) :warning :ok)
               _ :other))
-    {:expired  (fn [a c] (do (notify c :renewal) (put a :expired (+ (get a :expired) 1))))
-     :warning  (fn [a c] (do (notify c :expiry-warn) (put a :warning (+ (get a :warning) 1))))
-     :ok       (fn [a c] (put a :ok (+ (get a :ok) 1)))}
+    {:expired  (fn [a c] (do (notify c :renewal) (put a :expired (add (get a :expired) 1))))
+     :warning  (fn [a c] (do (notify c :expiry-warn) (put a :warning (add (get a :warning) 1))))
+     :ok       (fn [a c] (put a :ok (add (get a :ok) 1)))}
     customers
     {:expired 0 :warning 0 :ok 0}))
 
@@ -445,14 +445,14 @@ Where compression macros are used, the macro definition is shown on first use.
   (loop [i 0 a 0 b 1]
     (if (= i n)
       a
-      (recur (+ i 1) b (+ a b)))))
+      (recur (add i 1) b (add a b)))))
 ```
 
 **HiveSpeak (compressed)**:
 ```
 (def (fib n)
   (loop [i 0 a 0 b 1]
-    (if (= i n) a (recur (+ i 1) b (+ a b)))))
+    (if (= i n) a (recur (add i 1) b (add a b)))))
 ```
 
 ### 5.2 FizzBuzz
@@ -468,7 +468,7 @@ Where compression macros are used, the macro definition is shown on first use.
       [T F] "Fizz"
       [F T] "Buzz"
       _     i))
-    (range 1 (+ n 1))))
+    (range 1 (add n 1))))
 
 (fizzbuzz 100)
 ```
@@ -479,7 +479,7 @@ Where compression macros are used, the macro definition is shown on first use.
   (map (fn [i]
     (match [(= (% i 3) 0) (= (% i 5) 0)]
       [T T] "FizzBuzz" [T F] "Fizz" [F T] "Buzz" _ i))
-    (range 1 (+ n 1))))
+    (range 1 (add n 1))))
 ```
 
 ### 5.3 Binary Search
@@ -489,24 +489,24 @@ Where compression macros are used, the macro definition is shown on first use.
 **HiveSpeak (verbose)**:
 ```
 (def (binary-search lst target)
-  (loop [lo 0 hi (- (len lst) 1)]
-    (if (> lo hi)
+  (loop [lo 0 hi (sub (len lst) 1)]
+    (if (gt lo hi)
       N
-      (let [mid (/ (+ lo hi) 2)
+      (let [mid (/ (add lo hi) 2)
             val (nth lst mid)]
         (match (compare val target)
           0  mid
-          -1 (recur (+ mid 1) hi)
-          1  (recur lo (- mid 1)))))))
+          -1 (recur (add mid 1) hi)
+          1  (recur lo (sub mid 1)))))))
 ```
 
 **HiveSpeak (compressed)**:
 ```
 (def (bsearch lst t)
-  (loop [lo 0 hi (- (len lst) 1)]
-    (if (> lo hi) N
-      (let [m (/ (+ lo hi) 2) v (nth lst m)]
-        (match (compare v t) 0 m -1 (recur (+ m 1) hi) 1 (recur lo (- m 1)))))))
+  (loop [lo 0 hi (sub (len lst) 1)]
+    (if (gt lo hi) N
+      (let [m (/ (add lo hi) 2) v (nth lst m)]
+        (match (compare v t) 0 m -1 (recur (add m 1) hi) 1 (recur lo (sub m 1)))))))
 ```
 
 ### 5.4 Map Inversion
@@ -552,9 +552,9 @@ Where compression macros are used, the macro definition is shown on first use.
 ```
 (macro (causal-chain root symptom & links)
   '(assert! {:topic :diagnosis
-             :root-cause ~root
-             :symptom ~symptom
-             :chain ~links}))
+             :root-cause ,root
+             :symptom ,symptom
+             :chain ,links}))
 
 (causal-chain :unindexed-query :slow-database
   [:unindexed-query :full-table-scan]
@@ -582,8 +582,8 @@ Where compression macros are used, the macro definition is shown on first use.
 ```
 (macro (tradeoff options rec reason)
   '(do
-     (assert! {:topic :options :analysis ~options})
-     (suggest~ {:recommendation ~rec :reason ~reason})))
+     (assert! {:topic :options :analysis ,options})
+     (suggest~ {:recommendation ,rec :reason ,reason})))
 
 (tradeoff
   [{:id :A :+ [:fast] :- [:expensive]}
@@ -610,11 +610,11 @@ Where compression macros are used, the macro definition is shown on first use.
 ```
 (macro (hypothesis claim pro con verdict conf)
   '(assert! {:topic :hypothesis
-             :claim ~claim
-             :evidence-for ~pro
-             :evidence-against ~con
-             :conclusion ~verdict
-             :confidence ~conf}))
+             :claim ,claim
+             :evidence-for ,pro
+             :evidence-against ,con
+             :conclusion ,verdict
+             :confidence ,conf}))
 
 (hypothesis
   {:leak-in :image-processing}
@@ -644,7 +644,7 @@ Where compression macros are used, the macro definition is shown on first use.
 **HiveSpeak (compressed)**:
 ```
 (macro (propose topic plan)
-  '(suggest~ {:topic ~topic :plan ~plan}))
+  '(suggest~ {:topic ,topic :plan ,plan}))
 
 (propose :pg-migration
   [{:s 1 :do [:schema :test-migrate]}
@@ -668,8 +668,8 @@ Where compression macros are used, the macro definition is shown on first use.
 **HiveSpeak (compressed)**:
 ```
 (macro (counter-propose ref accepts amends)
-  '(do (accept+ {:ref ~ref :scope :partial})
-       (suggest~ {:amend ~amends :ref ~ref})))
+  '(do (accept+ {:ref ,ref :scope :partial})
+       (suggest~ {:amend ,amends :ref ,ref})))
 
 (counter-propose #migration-proposal
   :plan-concept
@@ -697,8 +697,8 @@ Where compression macros are used, the macro definition is shown on first use.
 **HiveSpeak (compressed)**:
 ```
 (macro (mediate status compromise)
-  '(do (assert! {:topic :consensus :status ~status})
-       (suggest~ {:compromise ~compromise})))
+  '(do (assert! {:topic :consensus :status ,status})
+       (suggest~ {:compromise ,compromise})))
 
 (mediate
   {:agree 3 :disagree 1 :on :deadline}
@@ -721,8 +721,8 @@ Where compression macros are used, the macro definition is shown on first use.
 **HiveSpeak (compressed)**:
 ```
 (macro (reject-suggest ref reason alt)
-  '(do (reject- {:ref ~ref :reason ~reason})
-       (suggest~ {:alternative ~alt})))
+  '(do (reject- {:ref ,ref :reason ,reason})
+       (suggest~ {:alternative ,alt})))
 
 (reject-suggest #lib-choice :gpl-incompatible :other-library)
 ```
@@ -746,7 +746,7 @@ Where compression macros are used, the macro definition is shown on first use.
 **HiveSpeak (compressed)**:
 ```
 (macro (clarify? ref what)
-  '(ask? {:about ~ref :want :clarification :specifically ~what}))
+  '(ask? {:about ,ref :want :clarification :specifically ,what}))
 
 (clarify? #prev "normalize the embeddings")
 ```
@@ -795,7 +795,7 @@ Where compression macros are used, the macro definition is shown on first use.
 ```
 (macro (checkpoint! rounds)
   '(do
-     (assert! {:meta :process :rounds ~rounds :status :oscillating})
+     (assert! {:meta :process :rounds ,rounds :status :oscillating})
      (do! :summarize {:scope :negotiation :split [:agreed :disputed]})))
 
 (checkpoint! 3)
@@ -821,8 +821,8 @@ Where compression macros are used, the macro definition is shown on first use.
 ```
 (macro (correct! ref field old new)
   '(do
-     (reject- {:ref ~ref :scope ~field :reason :self-correction})
-     (assert! {:correction ~field :value ~new :supersedes ~ref})))
+     (reject- {:ref ,ref :scope ,field :reason :self-correction})
+     (assert! {:correction ,field :value ,new :supersedes ,ref})))
 
 (correct! #prev :threshold 0.85 0.95)
 ```
@@ -846,8 +846,8 @@ Where compression macros are used, the macro definition is shown on first use.
 ```
 (macro (pivot! from to resume-when)
   '(do
-     (suggest~ {:defer ~from :resume-when ~resume-when})
-     (do! :focus {:topic ~to :priority :now})))
+     (suggest~ {:defer ,from :resume-when ,resume-when})
+     (do! :focus {:topic ,to :priority :now})))
 
 (pivot! :api-discussion :database-schema :schema-finalized)
 ```
@@ -877,7 +877,7 @@ This section demonstrates how the same message compresses across stages of share
 ```
 (macro (review! target scope output)
   '(emit self :target :reviewer
-     (request! {:action :review :target ~target :scope ~scope :output ~output})))
+     (request! {:action :review :target ,target :scope ,scope :output ,output})))
 
 (review! :pull-request [:bugs :security :style] {:format :summary :include [:severity :line-refs]})
 ```
@@ -924,18 +924,18 @@ This section demonstrates how the same message compresses across stages of share
 **Stage 2 -- Macro compression**:
 ```
 (macro (pipeline checks on-pass on-fail)
-  '(let [results (map (fn [c] (request! c)) ~checks)]
+  '(let [results (map (fn [c] (request! c)) ,checks)]
      (if (all (fn [r] (get r :pass)) results)
-       ~on-pass
-       ~on-fail)))
+       ,on-pass
+       ,on-fail)))
 
 (macro (docker-ship! tag registry env)
-  '(do (do! :docker-build {:tag ~tag})
-       (do! :docker-push {:registry ~registry :tag ~tag})
-       (do! :deploy {:target ~env :tag ~tag})))
+  '(do (do! :docker-build {:tag ,tag})
+       (do! :docker-push {:registry ,registry :tag ,tag})
+       (do! :deploy {:target ,env :tag ,tag})))
 
 (macro (slack! channel msg)
-  '(do! :notify {:channel ~channel :via :slack :msg ~msg}))
+  '(do! :notify {:channel ,channel :via :slack :msg ,msg}))
 
 (pipeline
   [{:action :lint} {:action :test :type :unit} {:action :test :type :integration}]
@@ -989,14 +989,14 @@ This section demonstrates how the same message compresses across stages of share
 ```
 (macro (minutes & topics)
   '(do
-     (def pkt (packet {:type :meeting-summary :date :today :topics [~@topics]}))
+     (def pkt (packet {:type :meeting-summary :date :today :topics [,@topics]}))
      (map (fn [a] (emit self :target a (assert! {:ref pkt}))) attendees)))
 
 (macro (decided topic what)
-  '{:topic ~topic :decision ~what :status :decided})
+  '{:topic ,topic :decision ,what :status :decided})
 
 (macro (wip topic what assignee)
-  '{:topic ~topic :decision ~what :assigned-to ~assignee :status :in-progress})
+  '{:topic ,topic :decision ,what :assigned-to ,assignee :status :in-progress})
 
 (minutes
   (decided :migration-timeline :extend-one-week)
@@ -1023,53 +1023,53 @@ A collection of commonly useful macros referenced throughout this document.
 ```
 ; --- Communication Shorthand ---
 (macro (fact topic val & kvs)
-  '(assert! (mrg {:topic ~topic :claim ~val} ~@kvs)))
+  '(assert! (mrg {:topic ,topic :claim ,val} ,@kvs)))
 
 (macro (q about want)
-  '(ask? {:about ~about :want ~want}))
+  '(ask? {:about ,about :want ,want}))
 
 (macro (yn? about)
-  '(ask? {:about ~about :want :bool}))
+  '(ask? {:about ,about :want :bool}))
 
 (macro (do! action target & opts)
-  '(request! (mrg {:action ~action :target ~target} ~@opts)))
+  '(request! (mrg {:action ,action :target ,target} ,@opts)))
 
 (macro (believe claim conf)
-  '(assert! {:claim ~claim :confidence ~conf}))
+  '(assert! {:claim ,claim :confidence ,conf}))
 
 ; --- Workflow ---
 (macro (then & steps)
-  '(request! {:action :sequence :steps [~@steps]}))
+  '(request! {:action :sequence :steps [,@steps]}))
 
 (macro (assign team task & opts)
-  '(emit self :target ~team (request! (mrg {:action ~task} ~@opts))))
+  '(emit self :target ,team (request! (mrg {:action ,task} ,@opts))))
 
 (macro (when-above metric threshold & actions)
-  '(if (> ~metric ~threshold) (do ~@actions) N))
+  '(if (gt ,metric ,threshold) (do ,@actions) N))
 
 ; --- Negotiation ---
 (macro (propose topic plan)
-  '(suggest~ {:topic ~topic :plan ~plan}))
+  '(suggest~ {:topic ,topic :plan ,plan}))
 
 (macro (counter-propose ref accepts amends)
-  '(do (accept+ {:ref ~ref :scope :partial}) (suggest~ {:amend ~amends :ref ~ref})))
+  '(do (accept+ {:ref ,ref :scope :partial}) (suggest~ {:amend ,amends :ref ,ref})))
 
 (macro (reject-suggest ref reason alt)
-  '(do (reject- {:ref ~ref :reason ~reason}) (suggest~ {:alternative ~alt})))
+  '(do (reject- {:ref ,ref :reason ,reason}) (suggest~ {:alternative ,alt})))
 
 ; --- Meta ---
 (macro (clarify? ref what)
-  '(ask? {:about ~ref :want :clarification :specifically ~what}))
+  '(ask? {:about ,ref :want :clarification :specifically ,what}))
 
 (macro (correct! ref field old new)
-  '(do (reject- {:ref ~ref :scope ~field :reason :self-correction})
-       (assert! {:correction ~field :value ~new :supersedes ~ref})))
+  '(do (reject- {:ref ,ref :scope ,field :reason :self-correction})
+       (assert! {:correction ,field :value ,new :supersedes ,ref})))
 
 (macro (pivot! from to resume-when)
-  '(do (suggest~ {:defer ~from :resume-when ~resume-when})
-       (do! :focus {:topic ~to :priority :now})))
+  '(do (suggest~ {:defer ,from :resume-when ,resume-when})
+       (do! :focus {:topic ,to :priority :now})))
 
 (macro (checkpoint! rounds)
-  '(do (assert! {:meta :process :rounds ~rounds :status :oscillating})
+  '(do (assert! {:meta :process :rounds ,rounds :status :oscillating})
        (do! :summarize {:scope :negotiation :split [:agreed :disputed]})))
 ```

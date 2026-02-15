@@ -4,8 +4,8 @@
 (def (fib-naive n)
   (if (<= n 1)
     n
-    (+ (fib-naive (- n 1))
-       (fib-naive (- n 2)))))
+    (add (fib-naive (sub n 1))
+         (fib-naive (sub n 2)))))
 
 (print (fmt "fib-naive(10) = {}" (fib-naive 10)))
 
@@ -14,7 +14,7 @@
   (loop [i 0 a 0 b 1]
     (if (= i n)
       a
-      (recur (+ i 1) b (+ a b)))))
+      (recur (add i 1) b (add a b)))))
 
 (print (fmt "fib(10) = {}" (fib 10)))
 (print (fmt "fib(20) = {}" (fib 20)))
@@ -25,6 +25,6 @@
   (loop [i 0 a 0 b 1 result []]
     (if (= i n)
       result
-      (recur (+ i 1) b (+ a b) (push result a)))))
+      (recur (add i 1) b (add a b) (push result a)))))
 
 (print (fmt "First 15: {}" (fib-seq 15)))

@@ -75,9 +75,9 @@ def test_basics_arithmetic_output():
     assert lines[3] == "T"
     assert lines[4] == "F"
     assert lines[5] == "N"
-    assert lines[6] == "5"       # + 2 3
+    assert lines[6] == "5"       # add 2 3
     assert lines[7] == "20"      # * 4 5
-    assert lines[8] == "7"       # - 10 3
+    assert lines[8] == "7"       # sub 10 3
 
 def test_fibonacci_sequence():
     out, _, _ = run_ht("fibonacci.ht")

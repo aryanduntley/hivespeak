@@ -54,13 +54,13 @@ def test_null():
 # ─── Arithmetic ──────────────────────────────────────────────────────────
 
 def test_add():
-    assert ev("(+ 2 3)") == 5
+    assert ev("(add 2 3)") == 5
 
 def test_add_variadic():
-    assert ev("(+ 1 2 3 4 5)") == 15
+    assert ev("(add 1 2 3 4 5)") == 15
 
 def test_sub():
-    assert ev("(- 10 3)") == 7
+    assert ev("(sub 10 3)") == 7
 
 def test_mul():
     assert ev("(* 4 5)") == 20
@@ -85,7 +85,7 @@ def test_lt():
     assert ev("(< 1 2)") is True
 
 def test_gt():
-    assert ev("(> 5 3)") is True
+    assert ev("(gt 5 3)") is True
 
 def test_lte():
     assert ev("(<= 3 3)") is True
@@ -119,13 +119,13 @@ def test_def_function():
     assert ev("(def (square n) (* n n)) (square 5)") == 25
 
 def test_def_function_multi_arg():
-    assert ev("(def (add a b) (+ a b)) (add 10 20)") == 30
+    assert ev("(def (mysum a b) (add a b)) (mysum 10 20)") == 30
 
 
 # ─── Let ─────────────────────────────────────────────────────────────────
 
 def test_let():
-    assert ev("(let [a 10 b 20] (+ a b))") == 30
+    assert ev("(let [a 10 b 20] (add a b))") == 30
 
 def test_let_scoping():
     assert ev("(def x 1) (let [x 99] x)") == 99
@@ -134,13 +134,14 @@ def test_let_sequential_bindings():
     assert ev("(let [a 5 b (* a 2)] b)") == 10
 
 
+
 # ─── Fn ──────────────────────────────────────────────────────────────────
 
 def test_fn():
     assert ev("(def f (fn [x] (* x 2))) (f 21)") == 42
 
 def test_fn_closure():
-    assert ev("(def (make-adder n) (fn [x] (+ x n))) (def add5 (make-adder 5)) (add5 10)") == 15
+    assert ev("(def (make-adder n) (fn [x] (add x n))) (def add5 (make-adder 5)) (add5 10)") == 15
 
 def test_fn_rest_params():
     assert ev("(def f (fn [& args] args)) (f 1 2 3)") == [1, 2, 3]
@@ -189,7 +190,7 @@ def test_loop_simple():
         (loop [i 0 acc 0]
           (if (= i 5)
             acc
-            (recur (+ i 1) (+ acc i))))
+            (recur (add i 1) (add acc i))))
     """) == 10  # 0+1+2+3+4
 
 def test_factorial():
@@ -198,7 +199,7 @@ def test_factorial():
           (loop [i n acc 1]
             (if (<= i 1)
               acc
-              (recur (- i 1) (* acc i)))))
+              (recur (sub i 1) (* acc i)))))
         (factorial 10)
     """) == 3628800
 
@@ -206,15 +207,15 @@ def test_factorial():
 # ─── Quote/Eval ──────────────────────────────────────────────────────────
 
 def test_quote():
-    result = ev("(quote (+ 1 2))")
+    result = ev("(quote (add 1 2))")
     assert isinstance(result, list)
 
 def test_quote_sugar():
-    result = ev("'(+ 1 2)")
+    result = ev("'(add 1 2)")
     assert isinstance(result, list)
 
 def test_eval_quoted():
-    assert ev("(eval '(+ 1 2))") == 3
+    assert ev("(eval '(add 1 2))") == 3
 
 
 # ─── Try/Catch/Throw ────────────────────────────────────────────────────
@@ -229,14 +230,14 @@ def test_try_catch():
 # ─── Pipe ────────────────────────────────────────────────────────────────
 
 def test_pipe_simple():
-    assert ev("(|> 5 (+ 3))") == 8
+    assert ev("(|> 5 (add 3))") == 8
 
 def test_pipe_chain():
     result = ev("""
         (|> [1 2 3 4 5 6 7 8 9 10]
           (flt (fn [x] (= (% x 2) 0)))
           (map (fn [x] (* x x)))
-          (red + 0))
+          (red add 0))
     """)
     assert result == 220
 
@@ -283,10 +284,10 @@ def test_map():
     assert ev("(map (fn [x] (* x 2)) [1 2 3])") == [2, 4, 6]
 
 def test_flt():
-    assert ev("(flt (fn [x] (> x 2)) [1 2 3 4 5])") == [3, 4, 5]
+    assert ev("(flt (fn [x] (gt x 2)) [1 2 3 4 5])") == [3, 4, 5]
 
 def test_red():
-    assert ev("(red + 0 [1 2 3 4 5])") == 15
+    assert ev("(red add 0 [1 2 3 4 5])") == 15
 
 def test_srt():
     assert ev("(srt [3 1 2])") == [1, 2, 3]
@@ -298,12 +299,12 @@ def test_uniq():
     assert ev("(uniq [1 2 2 3 3 3])") == [1, 2, 3]
 
 def test_any():
-    assert ev("(any (fn [x] (> x 3)) [1 2 3 4])") is True
-    assert ev("(any (fn [x] (> x 10)) [1 2 3])") is False
+    assert ev("(any (fn [x] (gt x 3)) [1 2 3 4])") is True
+    assert ev("(any (fn [x] (gt x 10)) [1 2 3])") is False
 
 def test_all():
-    assert ev("(all (fn [x] (> x 0)) [1 2 3])") is True
-    assert ev("(all (fn [x] (> x 2)) [1 2 3])") is False
+    assert ev("(all (fn [x] (gt x 0)) [1 2 3])") is True
+    assert ev("(all (fn [x] (gt x 2)) [1 2 3])") is False
 
 def test_range():
     assert ev("(range 5)") == [0, 1, 2, 3, 4]
@@ -456,6 +457,56 @@ def test_request_intent():
     assert result["intent"] == "request"
 
 
+# ─── Shorthand Intent Operators ──────────────────────────────────────────
+
+def test_shorthand_assert():
+    result = ev('(! {:claim "x"})')
+    assert result["__type__"] == "intent"
+    assert result["intent"] == "assert"
+
+def test_shorthand_ask():
+    result = ev('(? {:about "y"})')
+    assert result["intent"] == "ask"
+
+def test_shorthand_request():
+    result = ev('(> {:need "data"})')
+    assert result["intent"] == "request"
+
+def test_shorthand_suggest():
+    result = ev('(~ {:idea "z"})')
+    assert result["intent"] == "suggest"
+
+def test_shorthand_accept():
+    result = ev('(+ {:ref "ok"})')
+    assert result["intent"] == "accept"
+
+def test_shorthand_reject():
+    result = ev('(- {:reason "no"})')
+    assert result["intent"] == "reject"
+
+def test_shorthand_no_args():
+    result = ev("(!)")
+    assert result["intent"] == "assert"
+    assert result["content"] is None
+
+def test_shorthand_positional_args():
+    result = ev("(! :temp 68 :unit :fahrenheit)")
+    assert result["intent"] == "assert"
+    assert result["content"]["temp"] == 68
+    assert result["content"]["unit"] == ("KW", "fahrenheit")
+
+def test_shorthand_single_string():
+    result = ev('(! "temperature is 68")')
+    assert result["intent"] == "assert"
+    assert result["content"] == "temperature is 68"
+
+def test_longform_positional_args():
+    """Long-form intents also support positional args."""
+    result = ev("(assert! :topic :temperature :claim 68)")
+    assert result["content"]["topic"] == ("KW", "temperature")
+    assert result["content"]["claim"] == 68
+
+
 # ─── I/O ─────────────────────────────────────────────────────────────────
 
 def test_print(capsys):
@@ -576,7 +627,7 @@ def test_macro_nested_substitution():
     """Macro with substitution inside nested expressions."""
     result = ev("""
         (macro (square-sum a b)
-          (let [s (+ a b)] (* s s)))
+          (let [s (add a b)] (* s s)))
         (square-sum 3 4)
     """)
     assert result == 49
@@ -587,7 +638,7 @@ def test_macro_does_not_eval_args():
         (def x 10)
         (macro (show-and-return expr)
           expr)
-        (show-and-return (+ x 5))
+        (show-and-return (add x 5))
     """)
     assert result == 15
 

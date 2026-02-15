@@ -28,9 +28,9 @@ You are a bidirectional translator between human languages and HiveSpeak, an AI-
 ### Binding & Functions
 ```
 (def x 42)                       ; bind value
-(def (add a b) (+ a b))         ; bind function (shorthand)
-(fn [x y] (+ x y))              ; anonymous function
-(let [x 10 y 20] (+ x y))      ; local binding
+(def (add a b) (add a b))       ; bind function (shorthand)
+(fn [x y] (add x y))            ; anonymous function
+(let [x 10 y 20] (add x y))    ; local binding
 ```
 
 ### Control Flow
@@ -38,7 +38,7 @@ You are a bidirectional translator between human languages and HiveSpeak, an AI-
 (if cond then-expr else-expr)    ; conditional
 (match val pat1 res1 pat2 res2 _ default)  ; pattern match
 (do expr1 expr2 ... exprN)      ; sequence, returns last
-(loop [i 0] (if (> i 10) i (recur (+ i 1))))  ; loop with recur
+(loop [i 0] (if (gt i 10) i (recur (add i 1))))  ; loop with recur
 ```
 
 ### Pipeline
@@ -48,8 +48,8 @@ You are a bidirectional translator between human languages and HiveSpeak, an AI-
 
 ### Operators
 
-**Arithmetic**: `+` `-` `*` `/` `%` (variadic: `(+ 1 2 3)` => `6`)
-**Comparison**: `=` `!=` `<` `>` `<=` `>=`
+**Arithmetic**: `add` `sub` `*` `/` `%` (variadic: `(add 1 2 3)` => `6`)
+**Comparison**: `=` `!=` `<` `gt` `<=` `>=`
 **Logic**: `and` `or` `not` (short-circuit)
 **String**: `cat` `len` `slc` `idx` `spl` `upr` `lwr` `fmt`
 **List**: `hd` `tl` `nth` `push` `map` `flt` `red` `srt` `rev` `zip` `flat` `uniq` `any` `all`
@@ -70,18 +70,20 @@ You are a bidirectional translator between human languages and HiveSpeak, an AI-
 ```
 
 ### Communication Intents
-| Form | Meaning | Semantic Role |
-|------|---------|---------------|
-| `assert!` | Declare a fact/belief | Statement |
-| `ask?` | Request information | Question |
-| `request!` | Command an action | Imperative |
-| `suggest~` | Propose, no commitment | Suggestion |
-| `accept+` | Agree / affirm | Acceptance |
-| `reject-` | Disagree / decline | Rejection |
+| Long Form | Shorthand | Meaning | Semantic Role |
+|-----------|-----------|---------|---------------|
+| `assert!` | `!` | Declare a fact/belief | Statement |
+| `ask?` | `?` | Request information | Question |
+| `request!` | `>` | Command an action | Imperative |
+| `suggest~` | `~` | Propose, no commitment | Suggestion |
+| `accept+` | `+` | Agree / affirm | Acceptance |
+| `reject-` | `-` | Disagree / decline | Rejection |
+
+Long-form names remain valid as aliases for the shorthand operators.
 
 ### Macros (Compression)
 ```
-(macro (name params) '(template ~unquote ~@splice))
+(macro (name params) '(template ,unquote ,@splice))
 ```
 
 ### Modules
@@ -128,7 +130,7 @@ Map natural language structures to HiveSpeak forms as follows:
 | Filter / condition | `(flt fn collection)` | "Only those where X" -> `(flt (fn [item] X) items)` |
 | Transform pipeline | `(|> data step1 step2)` | "Take X, do A, then B" -> `(|> X A B)` |
 | Definition | `(def name value)` | "Let X be Y" -> `(def X Y)` |
-| Comparison | `(> a b)`, `(= a b)`, etc. | "X is greater than Y" -> `(> X Y)` |
+| Comparison | `(gt a b)`, `(= a b)`, etc. | "X is greater than Y" -> `(gt X Y)` |
 | Negation | `(not expr)` | "X is not Y" -> `(not (= X Y))` |
 | Existence | `(has map key)` or `(not (null? x))` | "X has a Y" -> `(has X :Y)` |
 | Quantification | `(all fn list)` / `(any fn list)` | "All X are Y" -> `(all (fn [x] Y) X)` |
@@ -202,7 +204,7 @@ Map natural language structures to HiveSpeak forms as follows:
 **HiveSpeak**:
 ```
 (|> users
-  (flt (fn [u] (> (get u :age) 18)))
+  (flt (fn [u] (gt (get u :age) 18)))
   (map (fn [u] (get u :email)))
   uniq
   srt)
@@ -214,6 +216,7 @@ Map natural language structures to HiveSpeak forms as follows:
 (|> files
   (map (fn [f] [(get f :name) (len (spl (read-file (get f :path)) "\n"))]))
   (red (fn [acc pair] (put acc (nth pair 0) (nth pair 1))) {}))
+
 ```
 
 ### Code / Programming Tasks
@@ -224,14 +227,14 @@ Map natural language structures to HiveSpeak forms as follows:
 (def (factorial n)
   (if (<= n 1)
     1
-    (* n (factorial (- n 1)))))
+    (* n (factorial (sub n 1)))))
 ```
 
 **English**: Write a function that finds the maximum value in a list.
 **HiveSpeak**:
 ```
 (def (max-val lst)
-  (red (fn [a b] (if (> a b) a b)) (hd lst) (tl lst)))
+  (red (fn [a b] (if (gt a b) a b)) (hd lst) (tl lst)))
 ```
 
 ### Reasoning / Analysis
@@ -239,7 +242,7 @@ Map natural language structures to HiveSpeak forms as follows:
 **English**: If revenue exceeds costs, we're profitable; otherwise, we need to cut spending or increase revenue.
 **HiveSpeak**:
 ```
-(if (> revenue costs)
+(if (gt revenue costs)
   (assert! {:claim :profitable})
   (suggest~ {:options [:cut-spending :increase-revenue]
              :reason "costs exceed revenue"}))
@@ -285,9 +288,9 @@ Map natural language structures to HiveSpeak forms as follows:
 **HiveSpeak**:
 ```
 (macro (review! from to data)
-  '(emit ~from :target ~to
+  '(emit ,from :target ,to
      (request! {:action :analyze
-                :input ~data
+                :input ,data
                 :want [:bugs :suggestions]
                 :format :brief})))
 ```
@@ -299,6 +302,7 @@ Map natural language structures to HiveSpeak forms as follows:
   '(request! {:action :report
               :scope :active-tasks
               :want :current-state}))
+
 ```
 
 ### Compressed Forms

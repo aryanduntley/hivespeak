@@ -7,6 +7,11 @@ vendor/
 .env.development
 .env.production
 
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
 # Build artifacts
 build/
 dist/
@@ -28,3 +33,4 @@ Thumbs.db
 .claude
 .mcp.json
 .pytest_cache/
+docs/

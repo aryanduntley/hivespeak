@@ -89,14 +89,14 @@ def compile_to_js(ast_nodes):
         "const mrg = (a,b) => ({...a,...b});",
         "",
         "// Operator functions (for passing as values)",
-        "const _p = (...a) => a.reduce((x,y) => x+y);",
-        "const __ = (...a) => a.length === 1 ? -a[0] : a.reduce((x,y) => x-y);",
+        "const ht_add = (...a) => a.reduce((x,y) => x+y);",
+        "const ht_sub = (...a) => a.length === 1 ? -a[0] : a.reduce((x,y) => x-y);",
         "const _s = (...a) => a.reduce((x,y) => x*y);",
         "const _d = (a,b) => b !== 0 ? a/b : Infinity;",
         "const _eq = (a,b) => a === b;",
         "const _neq = (a,b) => a !== b;",
         "const _lt = (a,b) => a < b;",
-        "const _gt = (a,b) => a > b;",
+        "const ht_gt = (a,b) => a > b;",
         "const _lte = (a,b) => a <= b;",
         "const _gte = (a,b) => a >= b;",
         "",
@@ -313,20 +313,34 @@ def _sc_throw(args, ctx):
     return f"(() => {{ throw {_compile_node(args[0], ctx)}; }})()"
 
 
+def _sc_intent_js(intent_type):
+    def handler(args, ctx):
+        content = _compile_node(args[0], ctx) if args else "null"
+        return f"({{__type__: 'intent', intent: {_js_string(intent_type)}, content: {content}}})"
+    return handler
+
 _SEXPR_COMPILERS = {
     "def": _sc_def, "let": _sc_let, "fn": _sc_fn, "if": _sc_if,
     "do": _sc_do, "loop": _sc_loop, "|>": _sc_pipe, "print": _sc_print,
     "cell": _sc_cell, "emit": _sc_emit, "merge": _sc_merge,
     "compress": _sc_compress, "packet": _sc_packet,
     "try": _sc_try, "throw": _sc_throw,
+    # Intent long forms
+    "assert!": _sc_intent_js("assert"), "ask?": _sc_intent_js("ask"),
+    "request!": _sc_intent_js("request"), "suggest~": _sc_intent_js("suggest"),
+    "accept+": _sc_intent_js("accept"), "reject-": _sc_intent_js("reject"),
+    # Intent shorthand forms
+    "!": _sc_intent_js("assert"), "?": _sc_intent_js("ask"),
+    ">": _sc_intent_js("request"), "~": _sc_intent_js("suggest"),
+    "+": _sc_intent_js("accept"), "-": _sc_intent_js("reject"),
 }
 
 
 # ─── Operator mapping ─────────────────────────────────────────────────────
 
 _OP_MAP = {
-    "+": "+", "-": "-", "*": "*", "/": "/", "%": "%",
-    "=": "===", "!=": "!==", "<": "<", ">": ">", "<=": "<=", ">=": ">=",
+    "add": "+", "sub": "-", "*": "*", "/": "/", "%": "%",
+    "=": "===", "!=": "!==", "<": "<", "gt": ">", "<=": "<=", ">=": ">=",
     "and": "&&", "or": "||", "not": "!",
 }
 
@@ -344,8 +358,8 @@ def _compile_op(name, args, ctx):
 def _mangle(name):
     # Direct overrides for operators used as values
     _sym_overrides = {
-        "+": "_p", "-": "__", "*": "_s", "/": "_d", "%": "ht_mod",
-        "=": "_eq", "!=": "_neq", "<": "_lt", ">": "_gt", "<=": "_lte", ">=": "_gte",
+        "*": "_s", "/": "_d", "%": "ht_mod",
+        "=": "_eq", "!=": "_neq", "<": "_lt", "<=": "_lte", ">=": "_gte",
     }
     if name in _sym_overrides:
         return _sym_overrides[name]
@@ -356,7 +370,8 @@ def _mangle(name):
     js_reserved = {"const", "let", "var", "function", "return", "if", "else",
                    "while", "for", "break", "continue", "switch", "case", "default",
                    "new", "delete", "typeof", "void", "this", "class", "import",
-                   "export", "from", "try", "catch", "throw", "finally", "in", "of"}
+                   "export", "from", "try", "catch", "throw", "finally", "in", "of",
+                   "add", "sub", "gt"}
     if result in js_reserved:
         result = f"ht_{result}"
     return result

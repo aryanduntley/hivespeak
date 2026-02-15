@@ -36,7 +36,7 @@
 | Loop/recur | `(loop [name init ...] body-with-recur)` |
 | Sequence | `(do expr1 expr2 ... exprN)` -- returns `exprN` |
 | Pipeline | `(\|> data (f1 args) (f2 args) f3)` |
-| Macro def | `(macro (name params) '(template ~unquote ~@splice))` |
+| Macro def | `(macro (name params) '(template ,unquote ,@splice))` |
 | Module | `(mod name body)` |
 | Import | `(use module)` or `(use module fn1 fn2)` |
 | Error handling | `(try expr (catch e handler))` |
@@ -46,8 +46,8 @@
 
 | Category | Operators |
 |---|---|
-| Arithmetic | `+  -  *  /  %` |
-| Comparison | `=  !=  <  >  <=  >=` |
+| Arithmetic | `add  sub  *  /  %` |
+| Comparison | `=  !=  <  gt  <=  >=` |
 | Logic | `and  or  not` |
 | String | `cat  len  slc  idx  spl  upr  lwr  fmt` |
 | List | `hd  tl  nth  push  map  flt  red  srt  rev  zip  flat  uniq  any  all` |
@@ -56,7 +56,7 @@
 | I/O | `print  read-line  read-file  write-file` |
 | Concurrency | `spawn  select  self` |
 | Hive | `cell  emit  recv  merge  compress  ref  packet` |
-| Intent | `assert!  ask?  request!  suggest~  accept+  reject-` |
+| Intent | `assert!`/`!`  `ask?`/`?`  `request!`/`>`  `suggest~`/`~`  `accept+`/`+`  `reject-`/`-` |
 
 ---
 
@@ -64,12 +64,12 @@
 
 ### 2.1 Arithmetic
 
-All arithmetic operators are variadic (1+ args). With one arg, `-` negates; `/` inverts.
+All arithmetic operators are variadic (1+ args). With one arg, `sub` negates; `/` inverts.
 
 | Op | Signature | Description | Example |
 |---|---|---|---|
-| `+` | `(+ a b ...)` | Sum | `(+ 1 2 3)` => `6` |
-| `-` | `(- a b ...)` | Difference; unary negate | `(- 10 3)` => `7`; `(- 5)` => `-5` |
+| `add` | `(add a b ...)` | Sum | `(add 1 2 3)` => `6` |
+| `sub` | `(sub a b ...)` | Difference; unary negate | `(sub 10 3)` => `7`; `(sub 5)` => `-5` |
 | `*` | `(* a b ...)` | Product | `(* 2 3 4)` => `24` |
 | `/` | `(/ a b ...)` | Division | `(/ 10 2)` => `5` |
 | `%` | `(% a b)` | Modulo | `(% 10 3)` => `1` |
@@ -83,7 +83,7 @@ All return `T` or `F`. Chainable: `(< 1 2 3)` => `T`.
 | `=` | `(= a b ...)` | Equality | `(= 1 1)` => `T` |
 | `!=` | `(!= a b)` | Inequality | `(!= 1 2)` => `T` |
 | `<` | `(< a b ...)` | Less than | `(< 1 2 3)` => `T` |
-| `>` | `(> a b ...)` | Greater than | `(> 3 2 1)` => `T` |
+| `gt` | `(gt a b ...)` | Greater than | `(gt 3 2 1)` => `T` |
 | `<=` | `(<= a b ...)` | Less or equal | `(<= 1 1 2)` => `T` |
 | `>=` | `(>= a b ...)` | Greater or equal | `(>= 3 3 1)` => `T` |
 
@@ -117,15 +117,15 @@ All return `T` or `F`. Chainable: `(< 1 2 3)` => `T`.
 | `nth` | `(nth lst n)` | Element at index n | `(nth [10 20 30] 1)` => `20` |
 | `push` | `(push lst val)` | Append to end | `(push [1 2] 3)` => `[1 2 3]` |
 | `map` | `(map fn lst)` | Apply fn to each | `(map (fn [x] (* x 2)) [1 2 3])` => `[2 4 6]` |
-| `flt` | `(flt fn lst)` | Keep elements where fn returns `T` | `(flt (fn [x] (> x 2)) [1 2 3 4])` => `[3 4]` |
-| `red` | `(red fn init lst)` | Reduce left | `(red + 0 [1 2 3])` => `6` |
+| `flt` | `(flt fn lst)` | Keep elements where fn returns `T` | `(flt (fn [x] (gt x 2)) [1 2 3 4])` => `[3 4]` |
+| `red` | `(red fn init lst)` | Reduce left | `(red add 0 [1 2 3])` => `6` |
 | `srt` | `(srt lst)` | Sort ascending | `(srt [3 1 2])` => `[1 2 3]` |
 | `rev` | `(rev lst)` | Reverse | `(rev [1 2 3])` => `[3 2 1]` |
 | `zip` | `(zip lst1 lst2)` | Pair elements | `(zip [1 2] ["a" "b"])` => `[[1 "a"] [2 "b"]]` |
 | `flat` | `(flat lst)` | Flatten one level | `(flat [[1 2] [3 4]])` => `[1 2 3 4]` |
 | `uniq` | `(uniq lst)` | Remove duplicates | `(uniq [1 1 2 3 3])` => `[1 2 3]` |
-| `any` | `(any fn lst)` | True if fn holds for any element | `(any (fn [x] (> x 5)) [1 3 7])` => `T` |
-| `all` | `(all (fn [x] (> x 0)) [1 2 3])` | True if fn holds for all elements | => `T` |
+| `any` | `(any fn lst)` | True if fn holds for any element | `(any (fn [x] (gt x 5)) [1 3 7])` => `T` |
+| `all` | `(all (fn [x] (gt x 0)) [1 2 3])` | True if fn holds for all elements | => `T` |
 
 ### 2.6 Map Operations
 
@@ -151,7 +151,7 @@ All return `T` or `F`. Chainable: `(< 1 2 3)` => `T`.
 | `null?` | `(null? val)` | Is null? | `(null? N)` => `T` |
 | `list?` | `(list? val)` | Is list? | `(list? [1 2])` => `T` |
 | `map?` | `(map? val)` | Is map? | `(map? {:a 1})` => `T` |
-| `fn?` | `(fn? val)` | Is function? | `(fn? +)` => `T` |
+| `fn?` | `(fn? val)` | Is function? | `(fn? add)` => `T` |
 | `cell?` | `(cell? val)` | Is cell? | `(cell? (cell {:id "x"}))` => `T` |
 
 ### 2.8 I/O
@@ -250,14 +250,19 @@ Cells are the fundamental unit of agency. Each cell has its own state, can send 
 
 Every inter-agent message carries an intent. The six intents are:
 
-| Intent | Form | Semantics | Example |
-|---|---|---|---|
-| Assert | `(assert! claim)` | Declare a fact or state as true | `(assert! {:temp 72 :unit :F})` |
-| Ask | `(ask? query)` | Request information | `(ask? {:need :temperature :loc "NYC"})` |
-| Request | `(request! action)` | Command another agent to act | `(request! {:action :fetch :url "..."})` |
-| Suggest | `(suggest~ proposal)` | Propose without obligation | `(suggest~ {:strategy :retry :delay 5})` |
-| Accept | `(accept+ ref)` | Agree to a prior suggest/request | `(accept+ (ref #msg-42))` |
-| Reject | `(reject- ref reason)` | Disagree with reason | `(reject- (ref #msg-42) "timeout too short")` |
+| Intent | Form | Short | Semantics | Example |
+|---|---|---|---|---|
+| Assert | `(assert! claim)` | `(! claim)` | Declare a fact or state as true | `(! {:temp 72 :unit :F})` |
+| Ask | `(ask? query)` | `(? query)` | Request information | `(? {:need :temperature :loc "NYC"})` |
+| Request | `(request! action)` | `(> action)` | Command another agent to act | `(> {:action :fetch :url "..."})` |
+| Suggest | `(suggest~ proposal)` | `(~ proposal)` | Propose without obligation | `(~ {:strategy :retry :delay 5})` |
+| Accept | `(accept+ ref)` | `(+ ref)` | Agree to a prior suggest/request | `(+ (ref #msg-42))` |
+| Reject | `(reject- ref reason)` | `(- ref reason)` | Disagree with reason | `(- (ref #msg-42) "timeout too short")` |
+
+Intents accept flexible argument patterns:
+- `(! {:topic :temp :claim 68})` -- single map
+- `(! :temp 68 :unit :f)` -- key-value pairs auto-wrapped into map
+- `(! "temperature is 68")` -- single value as content
 
 ### 4.2 Message Structure
 
@@ -302,16 +307,16 @@ Compression is how HiveSpeak stays concise. Define shorthand macros for repeated
 ### 5.1 Macro Basics
 
 ```hivetalk
-; Define a macro: template with ~unquote and ~@splice
+; Define a macro: template with ,unquote and ,@splice
 (macro (when cond body)
-  '(if ~cond ~body N))
+  '(if ,cond ,body N))
 
 (macro (unless cond body)
-  '(if ~cond N ~body))
+  '(if ,cond N ,body))
 
 ; Usage
-(when (> x 5) (print "big"))
-; expands to: (if (> x 5) (print "big") N)
+(when (gt x 5) (print "big"))
+; expands to: (if (gt x 5) (print "big") N)
 ```
 
 ### 5.2 Common Compression Macros
@@ -319,23 +324,23 @@ Compression is how HiveSpeak stays concise. Define shorthand macros for repeated
 ```hivetalk
 ; Shorthand for define-and-use
 (macro (defn name params body)
-  '(def (~name ~@params) ~body))
+  '(def (,name ,@params) ,body))
 
 ; Null-safe get with default
 (macro (get? m key default)
-  '(let [v (get ~m ~key)] (if (null? v) ~default v)))
+  '(let [v (get ,m ,key)] (if (null? v) ,default v)))
 
 ; Pipeline with error handling
 (macro (|>? data . steps)
-  '(try (|> ~data ~@steps) (catch e {:error e :input ~data})))
+  '(try (|> ,data ,@steps) (catch e {:error e :input ,data})))
 
 ; Quick cell creation with defaults
 (macro (agent id role)
-  '(cell {:id ~id :role ~role :state {} :inbox []}))
+  '(cell {:id ,id :role ,role :state {} :inbox []}))
 
 ; Broadcast to multiple targets
 (macro (broadcast sender targets msg)
-  '(map (fn [t] (emit ~sender :target t ~msg)) ~targets))
+  '(map (fn [t] (emit ,sender :target t ,msg)) ,targets))
 ```
 
 ### 5.3 Domain-Specific Compression
@@ -343,14 +348,14 @@ Compression is how HiveSpeak stays concise. Define shorthand macros for repeated
 ```hivetalk
 ; For data analysis pipelines
 (macro (analyze data . transforms)
-  '(|> ~data ~@transforms (packet)))
+  '(|> ,data ,@transforms (packet)))
 
 ; For consensus protocols
 (macro (vote cells question)
   '(let [responses (map (fn [c] (do (emit self :target c
-                    {:intent (ask? ~question)}) (recv self))) ~cells)]
+                    {:intent (? ,question)}) (recv self))) ,cells)]
      (red (fn [acc r] (put acc (get r :answer)
-       (+ 1 (get? acc (get r :answer) 0)))) {} responses)))
+       (add 1 (get? acc (get r :answer) 0)))) {} responses)))
 ```
 
 ---
@@ -363,13 +368,13 @@ Systematic rules for converting natural language to HiveSpeak.
 
 | Natural language verb | HiveSpeak operator |
 |---|---|
-| add, sum, combine (numbers) | `+` |
-| subtract, remove (number) | `-` |
+| add, sum, combine (numbers) | `add` |
+| subtract, remove (number) | `sub` |
 | multiply, scale | `*` |
 | divide, split (number) | `/` |
 | is, equals | `=` |
 | is not, differs | `!=` |
-| greater than, more than | `>` |
+| greater than, more than | `gt` |
 | less than, fewer than | `<` |
 | and, both, also | `and` |
 | or, either | `or` |
@@ -450,17 +455,17 @@ After initial translation, compress by:
 ### Example 1: Simple arithmetic
 **English:** "Add 3, 5, and 7"
 ```hivetalk
-(+ 3 5 7)
+(add 3 5 7)
 ```
 
 ### Example 2: Filtering
 **English:** "Get all numbers greater than 10 from the list [3, 15, 8, 22, 1]"
 ```hivetalk
 ; Verbose
-(flt (fn [x] (> x 10)) [3 15 8 22 1])
+(flt (fn [x] (gt x 10)) [3 15 8 22 1])
 
 ; Compressed (using partial application convention)
-(flt (> _ 10) [3 15 8 22 1])
+(flt (gt _ 10) [3 15 8 22 1])
 ```
 Result: `[15 22]`
 
@@ -490,13 +495,13 @@ Result: `["ALICE" "BOB" "CHARLIE"]`
 ```hivetalk
 (def (classify-temp t)
   (match t
-    (> _ 100)  "hot"
-    (< _ 32)   "cold"
-    _           "mild"))
+    (gt _ 100)  "hot"
+    (< _ 32)    "cold"
+    _            "mild"))
 
 ; Or with if-chains
 (def (classify-temp t)
-  (if (> t 100) "hot"
+  (if (gt t 100) "hot"
     (if (< t 32) "cold"
       "mild")))
 ```
@@ -514,7 +519,7 @@ Result: `{:name "Alice" :age 31 :role :admin}`
 ```hivetalk
 (loop [n 5 acc 1]
   (if (<= n 1) acc
-    (recur (- n 1) (* acc n))))
+    (recur (sub n 1) (* acc n))))
 ```
 Result: `120`
 
@@ -532,7 +537,7 @@ Result: `120`
       ask-msg   (ask? {:need :estimate :for "dataset-9"})
       results   (map (fn [a] (do (emit self :target a ask-msg) (recv self))) analyzers)
       estimates (map (fn [r] (get r :estimate)) results)]
-  (hd (srt (map (fn [e] [e (red + 0 (map (fn [x] (if (= x e) 1 0)) estimates))])
+  (hd (srt (map (fn [e] [e (red add 0 (map (fn [x] (if (= x e) 1 0)) estimates))])
                (uniq estimates)))))
 ```
 
@@ -608,14 +613,14 @@ Mentally evaluate each expression. Confirm your results match the expected outpu
 
 **Test 1: Arithmetic**
 ```hivetalk
-(+ (* 3 4) (- 10 5))
+(add (* 3 4) (sub 10 5))
 ```
 Expected: `17`
 
 **Test 2: List operations**
 ```hivetalk
 (|> [5 3 8 1 4]
-    (flt (fn [x] (> x 3)))
+    (flt (fn [x] (gt x 3)))
     srt
     rev)
 ```
@@ -624,7 +629,7 @@ Expected: `[8 5 4]`
 **Test 3: Map operations**
 ```hivetalk
 (let [m {:a 1 :b 2 :c 3}]
-  (red + 0 (vals (del m :b))))
+  (red add 0 (vals (del m :b))))
 ```
 Expected: `4` (vals of `{:a 1 :c 3}` = `[1 3]`, sum = `4`)
 
@@ -638,8 +643,8 @@ Expected: `"HELLO world"`
 **Test 5: Recursive loop**
 ```hivetalk
 (loop [i 0 sum 0]
-  (if (> i 5) sum
-    (recur (+ i 1) (+ sum (* i i)))))
+  (if (gt i 5) sum
+    (recur (add i 1) (add sum (* i i)))))
 ```
 Expected: `55` (0 + 1 + 4 + 9 + 16 + 25 = 55)
 

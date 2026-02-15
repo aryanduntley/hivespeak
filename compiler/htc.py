@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""HiveSpeak CLI — interpret, compile, or REPL.
+"""HiveSpeak CLI — interpret, compile, benchmark, or REPL.
 
 Usage:
     python -m compiler.htc run <file.ht>     Interpret a file
@@ -7,6 +7,7 @@ Usage:
     python -m compiler.htc compile <file.ht> <target>  Compile to target (python|js)
     python -m compiler.htc tokenize <file.ht>          Show tokens
     python -m compiler.htc parse <file.ht>             Show AST
+    python -m compiler.htc bench [--verbose] [--category <cat>]  Token compression benchmark
 """
 
 import sys
@@ -208,6 +209,21 @@ def _balanced(text):
     return depth <= 0
 
 
+def run_bench(args):
+    """Run token compression benchmark."""
+    from compiler.bench import run_benchmark, format_report
+
+    verbose = "--verbose" in args or "-v" in args
+    category = None
+    if "--category" in args:
+        idx = args.index("--category")
+        if idx + 1 < len(args):
+            category = args[idx + 1]
+
+    results, summary = run_benchmark(category=category)
+    print(format_report(results, summary, verbose=verbose))
+
+
 def main():
     if len(sys.argv) < 2:
         print(__doc__)
@@ -227,6 +243,8 @@ def main():
         show_tokens(sys.argv[2])
     elif cmd == "parse" and len(sys.argv) >= 3:
         show_ast(sys.argv[2])
+    elif cmd == "bench":
+        run_bench(sys.argv[2:])
     else:
         print(__doc__)
         sys.exit(1)

@@ -632,9 +632,31 @@ def _sf_packet(args, env):
 # ─── Communication Intents ─────────────────────────────────────────────────
 
 def _sf_intent(intent_type):
-    """Factory for communication intent special forms."""
+    """Factory for communication intent special forms.
+
+    Supports flexible argument patterns:
+    - No args: content is None
+    - Single arg: content is that value (map, string, etc.)
+    - Multiple args: key-value pairs auto-wrapped into map
+    """
     def handler(args, env):
-        content = evaluate(args[0], env) if args else None
+        if not args:
+            return {"__type__": "intent", "intent": intent_type, "content": None}
+        if len(args) == 1:
+            content = evaluate(args[0], env)
+            return {"__type__": "intent", "intent": intent_type, "content": content}
+        # Multiple args → build map from key-value pairs
+        evaled = [evaluate(a, env) for a in args]
+        content = {}
+        i = 0
+        while i < len(evaled):
+            k = evaled[i]
+            if isinstance(k, tuple) and k[0] == "KW" and i + 1 < len(evaled):
+                content[k[1]] = evaled[i + 1]
+                i += 2
+            else:
+                content[f"_{i}"] = k
+                i += 1
         return {"__type__": "intent", "intent": intent_type, "content": content}
     return handler
 
@@ -667,13 +689,20 @@ _SPECIAL_FORMS = {
     "compress": _sf_compress,
     "ref":      _sf_ref,
     "packet":   _sf_packet,
-    # Communication intents
+    # Communication intents — long forms
     "assert!":  _sf_intent("assert"),
     "ask?":     _sf_intent("ask"),
     "request!": _sf_intent("request"),
     "suggest~": _sf_intent("suggest"),
     "accept+":  _sf_intent("accept"),
     "reject-":  _sf_intent("reject"),
+    # Communication intents — shorthand forms
+    "!":  _sf_intent("assert"),
+    "?":  _sf_intent("ask"),
+    ">":  _sf_intent("request"),
+    "~":  _sf_intent("suggest"),
+    "+":  _sf_intent("accept"),
+    "-":  _sf_intent("reject"),
 }
 
 
@@ -803,8 +832,8 @@ def _ht_write_file(path, data):
 # Built-in function registry — flat dict, data-driven
 _BUILTINS = {
     # Arithmetic
-    "+":    _arith(lambda a, b: a + b, 0),
-    "-":    _arith(lambda a, b: a - b, 0),
+    "add":  _arith(lambda a, b: a + b, 0),
+    "sub":  _arith(lambda a, b: a - b, 0),
     "*":    _arith(lambda a, b: a * b, 1),
     "/":    _arith(lambda a, b: a / b if b != 0 else float('inf'), 1),
     "%":    lambda a, b: a % b,
@@ -813,7 +842,7 @@ _BUILTINS = {
     "=":    _cmp(lambda a, b: a == b),
     "!=":   _cmp(lambda a, b: a != b),
     "<":    _cmp(lambda a, b: a < b),
-    ">":    _cmp(lambda a, b: a > b),
+    "gt":   _cmp(lambda a, b: a > b),
     "<=":   _cmp(lambda a, b: a <= b),
     ">=":   _cmp(lambda a, b: a >= b),
 

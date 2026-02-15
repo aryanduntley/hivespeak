@@ -81,10 +81,16 @@ def test_quote():
     assert tok_types("'x") == [T_QUOTE, T_SYM]
 
 def test_unquote():
-    assert tok_types("~x") == [T_UNQUOTE, T_SYM]
+    assert tok_types(",x") == [T_UNQUOTE, T_SYM]
 
 def test_splice():
-    assert tok_types("~@x") == [T_SPLICE, T_SYM]
+    assert tok_types(",@x") == [T_SPLICE, T_SYM]
+
+def test_tilde_as_symbol():
+    assert toks("~") == [(T_SYM, "~")]
+    # ~ inside an s-expression
+    result = toks("(~ :temp 68)")
+    assert result[1] == (T_SYM, "~")
 
 
 # ─── Whitespace & Comments ───────────────────────────────────────────────
@@ -102,13 +108,13 @@ def test_inline_comment():
 # ─── Composite ───────────────────────────────────────────────────────────
 
 def test_sexpr():
-    result = toks("(+ 1 2)")
+    result = toks("(add 1 2)")
     assert result == [
-        (T_LPAREN, "("), (T_SYM, "+"), (T_INT, 1), (T_INT, 2), (T_RPAREN, ")")
+        (T_LPAREN, "("), (T_SYM, "add"), (T_INT, 1), (T_INT, 2), (T_RPAREN, ")")
     ]
 
 def test_nested_sexpr():
-    result = toks("(+ (* 2 3) 4)")
+    result = toks("(add (* 2 3) 4)")
     assert len(result) == 9
 
 def test_list_literal():

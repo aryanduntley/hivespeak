@@ -4,111 +4,172 @@
 
 ---
 
-## Current State: v0.2.0 — Hardening Complete
+## Completed
 
-All v0.2.0 roadmap items are done. The compiler is tested, errors have source
-locations, macros work, files can be imported, and transpiler output is verified.
+### v0.1.0 — Genesis
+Reference implementation: lexer, parser, evaluator, REPL, Python/JS
+transpilers, translator system prompt, example programs.
 
-### What was built in this session
+### v0.2.0 — Hardening
+192 tests. Source locations in errors. Macro expansion. Module system with
+`(use)` + circular import guard. REPL with readline + tab completion.
+Python transpiler verified byte-identical on all examples.
 
-| Item | Status | Details |
-|------|--------|---------|
-| Unit test suite | Done | 192 tests across 5 files (lexer, parser, evaluator, integration, transpiler) |
-| Source locations in errors | Done | AST nodes carry `(line, col)`, all NameError/RuntimeError include location |
-| Module file loading | Done | `(use "path/to/file.ht")` with circular import guard and selective imports |
-| Macro expansion | Done | Template substitution via AST rewriting, rest params supported |
-| REPL history + completion | Done | readline-based, persistent history at `~/.hivespeak/repl_history`, tab completes all symbols |
-| Python transpiler fixes | Done | Added full stdlib, fixed loop/recur, let scoping, operators-as-values |
-| JS transpiler fixes | Done | Fixed loop/recur, added missing stdlib (len, map), operators-as-values |
-| Transpiler verification | Done | Python output byte-identical to interpreter on all 5 examples |
-| Evolution paths documented | Done | 6 future directions added to ProjectBlueprint.md |
-
-### Test suite breakdown
-
-```
-tests/test_lexer.py        — 33 tests  (tokenization, locations, edge cases)
-tests/test_parser.py       — 30 tests  (AST structure, source locations)
-tests/test_evaluator.py    — 110 tests (every type, form, builtin, macro, file import)
-tests/test_integration.py  — 12 tests  (example programs, CLI commands)
-tests/test_transpiler.py   — 7 tests   (compile + run + compare output)
-```
-
-Run: `python3 -m pytest tests/ -v`
+Run tests: `python3 -m pytest tests/ -v`
 
 ---
 
-## What's Next: v0.3.0 — Compression Layer
+## v0.3.0 — Compression Layer (in progress)
 
-This is where HiveSpeak starts demonstrating its core value proposition: token
-compression between AI agents.
+### Benchmark Results
 
-| Item | Priority | Notes |
-|------|----------|-------|
-| Vocabulary packet system | High | Define shared abbreviations between agents. Uses macros + `(use)` |
-| Token compression benchmarking | High | Measure actual savings with tiktoken. Turn "40-70%" into a tested number |
-| Dialect support | Medium | Loadable vocabulary sets for different domains |
-| Compression metrics dashboard | Low | Visualize compression ratios |
+Built `python3 -m compiler.htc bench` — tiktoken (cl100k_base), 23 pairs.
 
-### Suggested approach for v0.3.0
+#### Communication: HiveSpeak vs English
 
-1. **Vocabulary packets** — A `.ht` file that defines macros for a domain.
-   Example: `dict/devops.ht` defines `(deploy!)`, `(rollback!)`, etc. as
-   macros that expand to longer intent expressions. Agents load with `(use)`.
+| Form | Total tokens | vs English |
+|------|-------------|------------|
+| English | 568 | baseline |
+| HiveSpeak verbose | 1,210 | +113% worse |
+| HiveSpeak compressed (macros) | 591 | +4% (break-even) |
 
-2. **Benchmarking tool** — CLI command: `python3 -m compiler.htc bench "english text"`
-   that translates via the system prompt, counts tokens both ways, reports ratio.
+#### Why verbose HiveSpeak loses
 
-3. **Dialect loading** — `(use :dialect "devops")` syntactic sugar that looks up
-   `dict/<name>.ht` automatically.
+1. **Map syntax is expensive**: `{:topic :temp :claim 68}` — every `:`,
+   `{`, `}` is a token. Named keys double the count.
+2. **Intent markers are verbose**: `assert!` = 2 tokens. With map wrapping,
+   a simple assertion costs 10+ tokens.
+3. **BPE tokenizers are English-biased**: "Delete all temporary files" = 5
+   tokens. English is accidentally token-efficient for current LLMs.
+
+#### Where savings come from
+
+| Layer | Mechanism | Savings |
+|-------|-----------|---------|
+| Base (verbose) | Maps + long forms | -113% (worse) |
+| Shorthand syntax | `!` `?` `>` + positional args | Parity |
+| Domain vocabulary | Shared macro packs | 20-40% |
+| Progressive compression | Negotiated shorthand | 40-70% |
+
+Compression compounds over conversation length, not on single messages.
+
+#### The value beyond token count
+
+Even at parity, HiveSpeak provides:
+- **Unambiguity**: No interpretation needed
+- **Parseability**: Route by intent type without an LLM
+- **Structure**: Protocol-level message classification
+- **Compressibility**: The language can compress itself. English can't.
+
+### Pivot: Communication Protocol, Not Programming Language
+
+The benchmark exposed a deeper issue: HiveSpeak was trying to be both a
+communication protocol and a general-purpose programming language. It's
+not competitive as a programming language — Python has a standard library,
+an ecosystem, async, FFI, and decades of tooling. Competing there adds
+no value.
+
+What IS novel: intent markers, cell/collective/packet coordination,
+self-compressing vocabulary, LLM-free parseability. These solve a real
+problem — AI agent coordination today is English prose over JSON, which
+is ambiguous, verbose, and requires an LLM to parse every message.
+
+**Decision**: HiveSpeak is a communication and coordination protocol.
+Turing-complete computation is embedded to support message logic, not to
+replace Python. The transpilers are escape hatches, not headline features.
+
+### v0.3.0 Progress
+
+#### Step 1: Shorthand intent syntax -- DONE
+Added `!`, `?`, `>`, `~`, `+`, `-` as built-in operators in the evaluator.
+Positional args auto-wrap into content maps. Long forms stay as aliases.
+
+Renamed arithmetic operators to free symbols for intents:
+`+` → `add`, `-` → `sub`, `>` → `gt`. Unquote syntax changed from `~` to `,`.
+
+204 tests passing. All examples, transpilers, and documentation updated.
+
+#### Step 2: Re-benchmark with shorthand syntax -- DONE
+Added 4-tier benchmark (verbose / shorthand / compressed). Results:
+
+| Tier | Tokens | vs English |
+|------|--------|------------|
+| English | 568 | baseline |
+| Verbose | 1,211 | -113% |
+| **Shorthand** | **892** | **-57%** |
+| Compressed | 591 | -4% |
+
+Shorthand brings statements to near-parity (-6%) but overall average
+is dragged down by computation-heavy pairs.
+
+#### Step 3: Deep token analysis -- DONE
+Full investigation in `docs/token-analysis-v0.3.0.md`. Key findings:
+
+**The colon tax**: Every `:keyword` costs 2 tokens (`:` never merges in
+BPE). 9 keywords = 9 extra tokens = 50-100% overhead. This is the #1
+source of token waste.
+
+**Positional syntax (no colons) beats English by 30%**: Without the colon
+prefix, HiveSpeak eliminates grammatical filler ("the", "is", "at") that
+English wastes tokens on. Against JSON (the actual competitor), positional
+HiveSpeak is **52% cheaper**.
+
+**Code intent is 4x cheaper than code**: Agents that share context can
+send `(> patch fn add-retry 3)` (17 tokens) instead of the 70+ token
+function. HiveSpeak stays as comms layer; code embeds as payload.
+
+### Next Steps
+
+#### Step 4: Positional syntax (keywords optional)
+Allow `(! server healthy cpu 23)` alongside `(! :server :healthy :cpu 23)`.
+This is the highest-impact change: **30-50% token reduction** on
+communication messages, making HiveSpeak cheaper than English.
+
+#### Step 5: Standard abbreviation vocabulary
+Ship short forms in the core dictionary.
+
+#### Step 6: Domain vocabulary packs
+Macro packs for specific domains (`dict/devops.ht`, `dict/data-ops.ht`).
+
+#### Step 7: Progressive compression benchmark
+Measure compression across a multi-turn conversation. Show the compounding
+effect.
 
 ---
 
 ## What's After That
 
-### v0.4.0 — Concurrency & Networking
-- Real cell spawning (async/multiprocess)
-- Network emission (cells on different machines)
-- Persistent packet store (SQLite)
+### v0.4.0 — Real Multi-Agent Runtime
+Currently cells are simulated (closures in a dict). This version makes
+them real: actual concurrent agents, real message passing, network
+emission, persistent packet store. This is where HiveSpeak becomes
+something no other tool is.
 
-### v0.5.0 — Self-Hosting
-- HiveSpeak compiler written in HiveSpeak
-- Self-modifying language protocol
+### v0.5.0 — Protocol Ecosystem
+Package manager for vocabulary packs. Standard domain vocabularies. Live
+translator interface. Language observatory.
 
-### v1.0.0 — Production
-- Bytecode compiler, WebAssembly target, package manager, LSP
-
----
-
-## Evolution Paths (exploratory, not sequenced)
-
-These are documented in detail in `ProjectBlueprint.md`:
-
-- **Token Compression Benchmarking** — empirical measurement tool
-- **Live Translator Interface** — CLI/web demo of human↔HiveSpeak translation
-- **Dogfooding** — write HiveSpeak's test cases in HiveSpeak
-- **Multi-Agent Runtime** — actual concurrent cells, not simulated
-- **Vocabulary Packet Ecosystem** — shared domain-specific macro libraries
-- **Language Observatory** — instrument the runtime to observe language evolution
-
----
-
-## Key Files to Load (for AI context)
-
-1. `ProjectBlueprint.md` — architecture, roadmap, design decisions
-2. `PROGRESS.md` — this file, current status and next steps
-3. `dict/bootstrap.md` — learn the language
-4. `compiler/evaluator.py` — interpreter core
-5. `compiler/htc.py` — CLI entry point
+### v1.0.0 — Production Protocol
+Optimized runtime. Formal protocol standard. SDK for existing agent
+frameworks. Security model.
 
 ---
 
 ## Known Limitations
 
-- **JS transpiler**: `match`, `try/catch`, `set-state` not yet compiled.
-  JS basics runs partially; calculator/conversation/planning need more JS work.
-- **Python transpiler `let`**: Uses nested lambdas — works but generates
-  unreadable code for deep bindings. Could use a helper function pattern.
-- **Macros**: No hygiene (variable capture possible). Fine for now, revisit
-  if it causes real issues.
-- **REPL**: Tab completion doesn't complete mid-word inside parentheses
-  (readline limitation with custom delimiters).
+- **Cells are simulated**: `cell` creates a closure, `emit` stores in a
+  dict. No real concurrency or networking yet (v0.4.0).
+- **JS transpiler incomplete**: `match`, `try/catch`, `set-state` missing.
+- **Macros**: No hygiene (variable capture possible).
+- **REPL**: Tab completion doesn't work mid-word inside parens.
+
+---
+
+## Key Files
+
+1. `ProjectBlueprint.md` — architecture, roadmap, design decisions
+2. `PROGRESS.md` — this file
+3. `dict/bootstrap.md` — protocol reference
+4. `compiler/evaluator.py` — interpreter core
+5. `compiler/bench.py` — benchmarking tool
+6. `compiler/htc.py` — CLI entry point

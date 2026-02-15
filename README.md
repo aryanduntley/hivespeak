@@ -1,121 +1,143 @@
 # HiveSpeak
 
-**An AI-native language for inter-agent communication, human-to-AI compression, and general-purpose programming.**
+> **Note:** This README reflects early design decisions and will be updated as
+> the project evolves and solid decisions are made, applied, and tested.
+> See [PROGRESS.md](PROGRESS.md) for current status and
+> [docs/token-analysis-v0.3.0.md](docs/token-analysis-v0.3.0.md) for the
+> latest benchmark findings.
 
-HiveSpeak is a Lisp-family (S-expression) language built on three primitives — Cell, Collective, and Memory Packet — designed to be:
+**A communication and coordination protocol for AI agents.**
 
-1. **AI-to-AI communication** — Extremely token-efficient inter-agent messaging that eliminates natural language overhead
-2. **Human-to-AI compression** — Humans write in natural language, a translator AI converts to HiveSpeak, reducing token usage by 40-70%
-3. **AI programming language** — Turing-complete, compilable to Python/JS, with built-in communication primitives
+Today, AI agents coordinate using English prose over JSON APIs. This is wasteful — natural language is ambiguous, verbose, and requires an LLM to parse every message. HiveSpeak replaces that entire stack with one structured language.
+
+## What It Replaces
+
+| Current stack | HiveSpeak equivalent |
+|---|---|
+| English prose for instructions | Structured intent markers (`!` `?` `>` `~` `+` `-`) |
+| JSON for message serialization | Native S-expression data (maps, lists, keywords) |
+| Custom protocol for semantics | Built-in intent types (assert, ask, request, suggest, accept, reject) |
+| Message queue for routing | `emit` / `recv` between named cells |
+| Session state management | Memory packets (`compress` / `ref`) |
+| "What did we agree on?" | Immutable compressed packets from collective negotiation |
+
+## What It Looks Like
+
+```lisp
+; Agent asserts a fact
+(emit analyst (! :revenue {:q3 "up 15%" :confidence 0.9}))
+
+; Agent asks a question
+(emit manager (? :revenue :breakdown-by-region))
+
+; Agent requests an action
+(emit ops-team (> :deploy {:target :staging :tag "v2.1"}))
+
+; Agent proposes a plan
+(emit lead (~ :migration [{:s 1 :do [:schema]} {:s 2 :do [:app-layer]}]))
+
+; Agent accepts/rejects
+(emit lead (+ #migration-proposal))
+(emit dev   (- #migration-proposal :timeline-too-aggressive))
+
+; Embed logic in messages — conditionals, transforms, pipelines
+(emit monitor
+  (if (gt cpu-usage 90)
+    (> :alert {:level :critical :action :scale-up})
+    (! :status :nominal)))
+```
+
+## Why Not Just Use English + JSON?
+
+**Ambiguity**: "Delete all temporary files" — which files? Which directory? What counts as temporary? HiveSpeak: `(> :delete {:target :files :filter :tmp :scope "/var/cache"})` — no interpretation needed.
+
+**Parseability**: English requires an LLM to understand. HiveSpeak can be parsed by a 50-line function. Agents can route, filter, and act on messages without burning tokens on comprehension.
+
+**Compression**: Savings compound over a conversation as agents negotiate shared vocabulary:
+```
+First message:  (> :deploy {:target :staging :tag "v2.1"})     (14 tokens)
+After macro:    (deploy! :staging "v2.1")                       (7 tokens)
+After shorthand: (d! :s "v2.1")                                 (5 tokens)
+```
+
+**Structure**: Intent markers (`!` `?` `>` `~` `+` `-`) let agents classify messages at the protocol level — route questions to knowledge bases, requests to executors, assertions to memory — without reading the content.
 
 ## Quick Start
 
 ```bash
 # Run a HiveSpeak program
-python3 -m compiler.htc run examples/basics.ht
+python3 -m compiler.htc run examples/conversation.ht
 
-# Start the interactive REPL
+# Interactive REPL
 python3 -m compiler.htc repl
 
-# Transpile to Python
-python3 -m compiler.htc compile examples/fibonacci.ht python
-
-# Transpile to JavaScript
-python3 -m compiler.htc compile examples/fibonacci.ht js
-
-# View tokens / AST
-python3 -m compiler.htc tokenize examples/basics.ht
-python3 -m compiler.htc parse examples/basics.ht
+# Token compression benchmark
+python3 -m compiler.htc bench --verbose
 ```
 
-## What It Looks Like
+## The Substrate
 
-```lisp
-; Define and use functions
-(def square (fn [x] (* x x)))
-(print (square 7))  ; 49
+HiveSpeak is built on three primitives and three actions (see [SUBSTRATE.md](SUBSTRATE.md)):
 
-; Pipeline operator for data transformations
-(|> users
-  (flt (fn [u] (> (get u :age) 18)))
-  (map (fn [u] (get u :name)))
-  srt)
+- **Cell** — an autonomous agent with local state
+- **Collective** — a transient negotiation space between cells
+- **Memory Packet** — a compressed, immutable artifact from collective agreement
+- **Emit** — share state outward
+- **Merge** — partially synchronize with other cells
+- **Compress** — reduce shared state to a reusable packet
 
-; AI-to-AI communication with intent markers
-(emit analyst (assert! {:topic :revenue :claim "up 15%" :confidence 0.9}))
-(emit manager (ask? {:about :revenue :want :breakdown :by :region}))
-```
-
-## Token Compression Example
-
-```
-English (30 tokens):
-"Filter the user list to people over 18, get their names, sort them"
-
-HiveSpeak (9 tokens):
-(|> users (flt (fn [u] (> (get u :age) 18))) (map (fn [u] (get u :name))) srt)
-
-With shared vocabulary (5 tokens):
-(|> users (flt #adult?) (map #name) srt)
-```
+Four evolutionary pressures shape how communication evolves: bandwidth (shorter is cheaper), consensus (shared forms survive), survivorship (useful packets persist), scalability (efficient coordination wins).
 
 ## Project Structure
 
 ```
 HiveSpeak/
-├── SUBSTRATE.md              Philosophical foundation (Hive primitives)
-├── ProjectBlueprint.md       Project roadmap and architecture
+├── SUBSTRATE.md              The physics — primitives, actions, pressures
+├── ProjectBlueprint.md       Architecture, roadmap, design decisions
+├── PROGRESS.md               Current status, benchmark data, next steps
 │
-├── spec/                     Language specification
+├── spec/                     Protocol specification
 │   ├── language.md           Complete language reference
 │   └── grammar.peg           Formal PEG grammar
 │
-├── dict/                     AI dictionary / bootstrap
-│   ├── bootstrap.md          THE dictionary — any AI reads this to learn HiveSpeak
-│   └── core.ht               Standard vocabulary defined in HiveSpeak itself
+├── dict/                     AI dictionary
+│   ├── bootstrap.md          Any AI reads this to learn HiveSpeak
+│   └── core.ht               Standard vocabulary in HiveSpeak
 │
-├── compiler/                 Compiler/interpreter (Python)
-│   ├── lexer.py              Tokenizer: source → tokens
-│   ├── parser.py             Parser: tokens → AST
-│   ├── evaluator.py          Interpreter: AST → values
+├── compiler/                 Reference implementation (Python)
+│   ├── lexer.py              Tokenizer
+│   ├── parser.py             Parser
+│   ├── evaluator.py          Interpreter
+│   ├── bench.py              Token compression benchmarking
 │   ├── htc.py                CLI entry point
 │   └── targets/
-│       ├── to_python.py      HiveSpeak → Python transpiler
-│       └── to_js.py          HiveSpeak → JavaScript transpiler
+│       ├── to_python.py      Transpile to Python (escape hatch)
+│       └── to_js.py          Transpile to JavaScript (escape hatch)
 │
-├── translator/               Human <-> HiveSpeak translation layer
-│   ├── system_prompt.md      System prompt to make any AI a translator
+├── benchmarks/               Compression benchmark data
+│   └── pairs.json            23 English/HiveSpeak paired examples
+│
+├── translator/               Human <-> HiveSpeak translation
+│   ├── system_prompt.md      System prompt for any AI to become a translator
 │   └── examples.md           Bidirectional translation examples
 │
 └── examples/                 Example programs
-    ├── basics.ht             Core language features
-    ├── fibonacci.ht          Recursive + iterative computation
+    ├── basics.ht             Language features
     ├── conversation.ht       AI-to-AI dialogue
-    └── planning.ht           Multi-agent planning/negotiation
+    └── planning.ht           Multi-agent negotiation
 ```
-
-## Key Concepts
-
-- **S-expression syntax** — `(operator arg1 arg2 ...)` — homoiconic, zero ambiguity, trivial for AI to generate and parse
-- **Hive primitives** — `cell`, `emit`, `recv`, `merge`, `compress`, `packet` — built-in constructs for multi-agent communication
-- **Intent markers** — `assert!`, `ask?`, `request!`, `suggest~`, `accept+`, `reject-` — structured AI-to-AI messaging
-- **Pipeline operator** — `(|> data fn1 fn2 fn3)` — chainable data transformations
-- **Macro system** — self-compressing language that evolves shorter representations over time
 
 ## For AI Agents
 
-To learn HiveSpeak, read [`dict/bootstrap.md`](dict/bootstrap.md). After processing that single file, you can read, write, and translate HiveSpeak.
+To learn HiveSpeak, read [`dict/bootstrap.md`](dict/bootstrap.md). One file, complete reference.
 
-To become a HiveSpeak translator, prepend [`translator/system_prompt.md`](translator/system_prompt.md) to your system prompt.
+To become a translator (human English <-> HiveSpeak), prepend [`translator/system_prompt.md`](translator/system_prompt.md) to your system prompt.
 
 ## Requirements
 
 - Python 3.6+
+- tiktoken (benchmarking only): `pip install tiktoken`
 
 ## Status
 
-**v0.1.0 — Genesis**: Functional core with interpreter, REPL, Python/JS transpilers, translator layer, and example programs. See [ProjectBlueprint.md](ProjectBlueprint.md) for the full roadmap.
-
-## License
-
-See repository for license details.
+**v0.3.0-dev**: Benchmarking tool complete. Working on shorthand intent syntax and vocabulary compression. See [PROGRESS.md](PROGRESS.md) for details.

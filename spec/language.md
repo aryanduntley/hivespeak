@@ -1,4 +1,4 @@
-# HiveSpeak Language Specification v0.1.0
+# HiveSpeak Language Specification v0.3.0
 
 ## 1. Design Principles
 
@@ -35,7 +35,7 @@ The lexer produces these token types:
 | STRING      | `"[^"]*"`                        | `"hello"`, `""`       |
 | BOOL        | `T` or `F`                       | `T`, `F`              |
 | NULL        | `N`                              | `N`                   |
-| SYMBOL      | `[a-zA-Z_!?][a-zA-Z0-9_!?-]*`  | `add`, `my-fn`, `x?`  |
+| SYMBOL      | `[a-zA-Z_!?><~+-][a-zA-Z0-9_!?><~+-]*` | `add`, `my-fn`, `x?`, `!`, `?` |
 | KEYWORD     | `:[a-zA-Z_][a-zA-Z0-9_-]*`     | `:name`, `:target`    |
 | LPAREN      | `(`                              |                       |
 | RPAREN      | `)`                              |                       |
@@ -56,8 +56,11 @@ These symbols have built-in semantics and cannot be rebound:
 **Hive primitives:**
 `cell` `emit` `recv` `merge` `compress` `ref` `packet`
 
-**Communication intents:**
+**Communication intents (long form):**
 `assert!` `ask?` `request!` `suggest~` `accept+` `reject-`
+
+**Communication intents (shorthand):**
+`!` `?` `>` `~` `+` `-`
 
 **Module system:**
 `mod` `use` `pub`
@@ -88,7 +91,7 @@ These symbols have built-in semantics and cannot be rebound:
 Functions are first-class values created with `fn`:
 
 ```
-(fn [x y] (+ x y))          ; anonymous function
+(fn [x y] (add x y))        ; anonymous function
 ```
 
 ### 3.4 Cells
@@ -114,15 +117,15 @@ Memory packets are immutable compressed artifacts:
 ```
 ; Top-level binding
 (def x 42)
-(def add (fn [a b] (+ a b)))
+(def sum (fn [a b] (add a b)))
 
 ; Shorthand for function definition
-(def (add a b) (+ a b))
+(def (sum a b) (add a b))
 
 ; Local binding (scoped)
 (let [x 10
       y 20]
-  (+ x y))
+  (add x y))
 ; => 30
 ```
 
@@ -134,24 +137,24 @@ Memory packets are immutable compressed artifacts:
 
 ; Multi-expression body (last expression is return value)
 (fn [x y]
-  (def z (+ x y))
+  (def z (add x y))
   (* z 2))
 
 ; Variadic (rest params)
 (fn [head & rest] rest)
 
 ; Destructuring
-(fn [{:keys [a b]}] (+ a b))
+(fn [{:keys [a b]}] (add a b))
 ```
 
 ### 4.3 Conditionals: `if` and `match`
 
 ```
 ; if — ternary
-(if (> x 0) "pos" "non-pos")
+(if (gt x 0) "pos" "non-pos")
 
 ; if — without else (returns N on false)
-(if (> x 0) "pos")
+(if (gt x 0) "pos")
 
 ; match — pattern matching
 (match val
@@ -170,7 +173,7 @@ Evaluates expressions in order, returns the last:
 (do
   (def x 10)
   (def y 20)
-  (+ x y))
+  (add x y))
 ; => 30
 ```
 
@@ -178,9 +181,9 @@ Evaluates expressions in order, returns the last:
 
 ```
 (loop [i 0 sum 0]
-  (if (> i 10)
+  (if (gt i 10)
     sum
-    (recur (+ i 1) (+ sum i))))
+    (recur (add i 1) (add sum i))))
 ; => 55
 ```
 
@@ -189,8 +192,8 @@ Evaluates expressions in order, returns the last:
 Prevents evaluation; returns the expression as data:
 
 ```
-(quote (+ 1 2))    ; => the list (+ 1 2), not 3
-'(+ 1 2)           ; shorthand (reader macro)
+(quote (add 1 2))  ; => the list (add 1 2), not 3
+'(add 1 2)         ; shorthand (reader macro)
 ```
 
 ### 4.7 Eval: `eval`
@@ -198,7 +201,7 @@ Prevents evaluation; returns the expression as data:
 Evaluates data as code:
 
 ```
-(eval '(+ 1 2))    ; => 3
+(eval '(add 1 2))  ; => 3
 ```
 
 ### 4.8 Macros: `macro`
@@ -207,27 +210,27 @@ Define syntactic transformations (code → code before evaluation):
 
 ```
 (macro (unless cond body)
-  '(if (not ~cond) ~body N))
+  '(if (not ,cond) ,body N))
 
 (unless F "ran")   ; => "ran"
 ```
 
-The `~` inside a quoted form is unquote — it evaluates the expression and
+The `,` inside a quoted form is unquote — it evaluates the expression and
 splices the result into the template.
 
 ## 5. Built-in Operators
 
 ### 5.1 Arithmetic
 
-| Op   | Form          | Result  |
-|------|---------------|---------|
-| `+`  | `(+ 1 2)`    | `3`     |
-| `-`  | `(- 5 3)`    | `2`     |
-| `*`  | `(* 4 5)`    | `20`    |
-| `/`  | `(/ 10 3)`   | `3.33`  |
-| `%`  | `(% 10 3)`   | `1`     |
+| Op    | Form            | Result  |
+|-------|-----------------|---------|
+| `add` | `(add 1 2)`     | `3`     |
+| `sub` | `(sub 5 3)`     | `2`     |
+| `*`   | `(* 4 5)`       | `20`    |
+| `/`   | `(/ 10 3)`      | `3.33`  |
+| `%`   | `(% 10 3)`      | `1`     |
 
-Variadic: `(+ 1 2 3 4)` => `10`
+Variadic: `(add 1 2 3 4)` => `10`
 
 ### 5.2 Comparison
 
@@ -236,7 +239,7 @@ Variadic: `(+ 1 2 3 4)` => `10`
 | `=`  | `(= 1 1)`    | `T`    |
 | `!=` | `(!= 1 2)`   | `T`    |
 | `<`  | `(< 1 2)`    | `T`    |
-| `>`  | `(> 2 1)`    | `T`    |
+| `gt` | `(gt 2 1)`   | `T`    |
 | `<=` | `(<= 1 1)`   | `T`    |
 | `>=` | `(>= 2 1)`   | `T`    |
 
@@ -274,15 +277,15 @@ Short-circuit: `(and F (explode))` => `F` (explode never called)
 | `cat` | `(cat [1 2] [3 4])`      | `[1 2 3 4]`   |
 | `push`| `(push [1 2] 3)`         | `[1 2 3]`     |
 | `map` | `(map (fn [x] (* x 2)) [1 2 3])` | `[2 4 6]` |
-| `flt` | `(flt (fn [x] (> x 2)) [1 2 3 4])` | `[3 4]` |
-| `red` | `(red + 0 [1 2 3 4])`    | `10`          |
+| `flt` | `(flt (fn [x] (gt x 2)) [1 2 3 4])` | `[3 4]` |
+| `red` | `(red add 0 [1 2 3 4])`  | `10`          |
 | `srt` | `(srt [3 1 2])`          | `[1 2 3]`     |
 | `rev` | `(rev [1 2 3])`          | `[3 2 1]`     |
 | `zip` | `(zip [1 2] [3 4])`      | `[[1 3] [2 4]]` |
 | `flat`| `(flat [[1 2] [3 4]])`   | `[1 2 3 4]`   |
 | `uniq`| `(uniq [1 1 2 3 3])`     | `[1 2 3]`     |
-| `any` | `(any (fn [x] (> x 2)) [1 2 3])` | `T`   |
-| `all` | `(all (fn [x] (> x 0)) [1 2 3])` | `T`   |
+| `any` | `(any (fn [x] (gt x 2)) [1 2 3])` | `T`   |
+| `all` | `(all (fn [x] (gt x 0)) [1 2 3])` | `T`   |
 
 ### 5.6 Map Operations
 
@@ -302,9 +305,9 @@ Thread a value through a series of transformations:
 
 ```
 (|> [1 2 3 4 5]
-  (flt (fn [x] (> x 2)))
+  (flt (fn [x] (gt x 2)))
   (map (fn [x] (* x 10)))
-  (red + 0))
+  (red add 0))
 ; => 120
 ```
 
@@ -411,14 +414,18 @@ For AI-to-AI messaging, HiveSpeak defines structured intents:
 
 ### 7.1 Intent Markers
 
-| Form        | Meaning    | Usage                              |
-|-------------|------------|------------------------------------|
-| `assert!`   | Declare    | State a fact or belief             |
-| `ask?`      | Query      | Request information                |
-| `request!`  | Command    | Ask for an action to be performed  |
-| `suggest~`  | Propose    | Offer an option, no commitment     |
-| `accept+`   | Affirm     | Agree to a proposal or assertion   |
-| `reject-`   | Deny       | Disagree or decline                |
+| Long Form   | Short | Meaning    | Usage                              |
+|-------------|-------|------------|------------------------------------|
+| `assert!`   | `!`   | Declare    | State a fact or belief             |
+| `ask?`      | `?`   | Query      | Request information                |
+| `request!`  | `>`   | Command    | Ask for an action to be performed  |
+| `suggest~`  | `~`   | Propose    | Offer an option, no commitment     |
+| `accept+`   | `+`   | Affirm     | Agree to a proposal or assertion   |
+| `reject-`   | `-`   | Deny       | Disagree or decline                |
+
+Long forms and short forms are interchangeable aliases. Shorthand forms
+support positional args: `(! topic claim confidence)` is equivalent to
+`(assert! {:topic topic :claim claim :confidence confidence})`.
 
 ### 7.2 Message Structure
 
@@ -463,8 +470,8 @@ Once vocabulary is established between agents, communication compresses:
 
 ```
 (mod math
-  (def (add a b) (+ a b))
-  (def (sub a b) (- a b))
+  (def (sum a b) (add a b))
+  (def (diff a b) (sub a b))
   (def pi 3.14159265)
   (def (circle-area r) (* pi (* r r))))
 ```
@@ -473,7 +480,7 @@ Once vocabulary is established between agents, communication compresses:
 
 ```
 (use math)              ; import all
-(use math add sub)      ; import specific bindings
+(use math sum diff)     ; import specific bindings
 (math.circle-area 5)    ; qualified access
 ```
 
@@ -485,19 +492,19 @@ Macros are how HiveSpeak compresses itself. They transform code before evaluatio
 
 ```
 (macro (when cond & body)
-  '(if ~cond (do ~@body) N))
+  '(if ,cond (do ,@body) N))
 
-(when (> x 0)
+(when (gt x 0)
   (print "positive")
   (* x 2))
-; Expands to: (if (> x 0) (do (print "positive") (* x 2)) N)
+; Expands to: (if (gt x 0) (do (print "positive") (* x 2)) N)
 ```
 
 ### 9.2 Quasiquoting
 
 Inside `'(...)`:
-- `~expr` — unquote: evaluate expr and insert result
-- `~@expr` — splice: evaluate expr (must be list) and splice elements
+- `,expr` — unquote: evaluate expr and insert result
+- `,@expr` — splice: evaluate expr (must be list) and splice elements
 
 ### 9.3 Compression Idiom
 
@@ -514,9 +521,9 @@ patterns, compressing their language over time:
 
 ; After macro compression
 (macro (review! from to data)
-  '(emit ~from :target ~to
+  '(emit ,from :target ,to
      (request! {:action :analyze
-                 :input ~data
+                 :input ,data
                  :want [:bugs :suggestions]
                  :format :brief})))
 
@@ -586,7 +593,7 @@ sorted([u["name"] for u in users if u["age"] > 18])
 
 **HiveSpeak:**
 ```
-(|> users (flt (fn [u] (> (get u :age) 18))) (map (fn [u] (get u :name))) srt)
+(|> users (flt (fn [u] (gt (get u :age) 18))) (map (fn [u] (get u :name))) srt)
 ```
 ~22 tokens (verbose form)
 

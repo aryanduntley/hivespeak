@@ -25,9 +25,9 @@ T_SPLICE = "SPLICE"
 T_PIPE = "PIPE"
 T_EOF = "EOF"
 
-DELIMITERS = {"(", ")", "[", "]", "{", "}", " ", "\t", "\n", "\r", ";", '"', "'"}
+DELIMITERS = {"(", ")", "[", "]", "{", "}", " ", "\t", "\n", "\r", ";", '"', "'", ","}
 
-SYMBOL_START = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_!?+-*/<>=&|%")
+SYMBOL_START = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_!?+-*/<>=&|%~")
 SYMBOL_CONT = SYMBOL_START | set("0123456789.-")
 
 
@@ -185,13 +185,13 @@ def tokenize(source):
             tokens.append((T_QUOTE, "'", line, col))
             pos += 1
             col += 1
-        elif c == "~":
+        elif c == ",":
             if pos + 1 < n and source[pos + 1] == "@":
-                tokens.append((T_SPLICE, "~@", line, col))
+                tokens.append((T_SPLICE, ",@", line, col))
                 pos += 2
                 col += 2
             else:
-                tokens.append((T_UNQUOTE, "~", line, col))
+                tokens.append((T_UNQUOTE, ",", line, col))
                 pos += 1
                 col += 1
         # Pipe operator |>

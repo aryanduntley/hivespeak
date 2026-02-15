@@ -147,15 +147,15 @@ suggest_t = lambda c: _ht_intent('suggest', c)
 accept_p = lambda c: _ht_intent('accept', c)
 reject_ = lambda c: _ht_intent('reject', c)
 
-# Operator functions (for passing as values, e.g. (red + 0 nums))
-_p = lambda *a: functools.reduce(lambda x, y: x + y, a) if len(a) > 1 else a[0]
-__ = lambda *a: functools.reduce(lambda x, y: x - y, a) if len(a) > 1 else -a[0]
+# Operator functions (for passing as values, e.g. (red add 0 nums))
+ht_add = lambda *a: functools.reduce(lambda x, y: x + y, a) if len(a) > 1 else a[0]
+ht_sub = lambda *a: functools.reduce(lambda x, y: x - y, a) if len(a) > 1 else -a[0]
 _s = lambda *a: functools.reduce(lambda x, y: x * y, a) if len(a) > 1 else a[0]
 _d = lambda a, b: a / b if b != 0 else float('inf')
 _eq = lambda a, b: a == b
 _neq = lambda a, b: a != b
 _lt = lambda a, b: a < b
-_gt = lambda a, b: a > b
+ht_gt = lambda a, b: a > b
 _lte = lambda a, b: a <= b
 _gte = lambda a, b: a >= b
 
@@ -478,6 +478,9 @@ _SEXPR_COMPILERS = {
     "assert!": _sc_intent("assert"), "ask?": _sc_intent("ask"),
     "request!": _sc_intent("request"), "suggest~": _sc_intent("suggest"),
     "accept+": _sc_intent("accept"), "reject-": _sc_intent("reject"),
+    "!": _sc_intent("assert"), "?": _sc_intent("ask"),
+    ">": _sc_intent("request"), "~": _sc_intent("suggest"),
+    "+": _sc_intent("accept"), "-": _sc_intent("reject"),
     "set-state": lambda args, ctx: f"set_state({', '.join(_compile_node(a, ctx) for a in args)})",
     "get-state": lambda args, ctx: f"get_state({_compile_node(args[0], ctx)})",
 }
@@ -486,8 +489,8 @@ _SEXPR_COMPILERS = {
 # ─── Operator mapping ─────────────────────────────────────────────────────
 
 _OP_MAP = {
-    "+": "+", "-": "-", "*": "*", "/": "/", "%": "%",
-    "=": "==", "!=": "!=", "<": "<", ">": ">", "<=": "<=", ">=": ">=",
+    "add": "+", "sub": "-", "*": "*", "/": "/", "%": "%",
+    "=": "==", "!=": "!=", "<": "<", "gt": ">", "<=": "<=", ">=": ">=",
     "and": "and", "or": "or", "not": "not",
 }
 
@@ -498,9 +501,9 @@ def _compile_op(name, args, ctx):
     if name == "not":
         return f"(not {compiled[0]})"
     if len(compiled) == 1:
-        return f"({py_op}{compiled[0]})" if name == "-" else compiled[0]
-    if len(compiled) > 2 and name in ("+", "*"):
-        # Variadic: (+ 1 2 3) -> (1 + 2 + 3)
+        return f"({py_op}{compiled[0]})" if name == "sub" else compiled[0]
+    if len(compiled) > 2 and name in ("add", "*"):
+        # Variadic: (add 1 2 3) -> (1 + 2 + 3)
         return f"({f' {py_op} '.join(compiled)})"
     return f"({f' {py_op} '.join(compiled)})"
 
@@ -511,8 +514,8 @@ def _mangle(name):
     """Convert HiveSpeak identifier to valid Python identifier."""
     # Direct symbol overrides for operators used as values
     _sym_overrides = {
-        "+": "_p", "-": "__", "*": "_s", "/": "_d", "%": "ht_mod",
-        "=": "_eq", "!=": "_neq", "<": "_lt", ">": "_gt", "<=": "_lte", ">=": "_gte",
+        "*": "_s", "/": "_d", "%": "ht_mod",
+        "=": "_eq", "!=": "_neq", "<": "_lt", "<=": "_lte", ">=": "_gte",
     }
     if name in _sym_overrides:
         return _sym_overrides[name]
@@ -525,7 +528,7 @@ def _mangle(name):
                   "while", "for", "break", "continue", "pass", "raise", "yield",
                   "lambda", "global", "nonlocal", "assert", "else", "elif",
                   "map", "type", "str", "int", "float", "hash",
-                  "any", "all", "range", "zip", "len"):
+                  "any", "all", "range", "zip", "len", "add", "sub", "gt"):
         result = f"ht_{result}"
     return result
 
